@@ -150,7 +150,7 @@
             background: transparent;
         }
         
-        /* PC සහ Phone දෙකේදීම ක්‍රියාත්මක වන පරිදි එකම විදිහට තබන ලද block-click එක */
+        /* PC saha Phone dekema wada karana block-click eka */
         .block-click {
             position: absolute;
             top: 0;
@@ -160,6 +160,7 @@
             z-index: 10;
             background: transparent;
             cursor: default;
+            pointer-events: auto !important;
         }
         
         .player-controls-bar {
@@ -316,6 +317,13 @@
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
                 gap: 12px;
             }
+            
+            /* Phone eke block-click eka aniwarenma wada karanna */
+            .block-click {
+                pointer-events: auto !important;
+                width: 120px;
+                height: 55px;
+            }
         }
     </style>
 </head>
@@ -385,7 +393,7 @@
                 </div>
 
                 <!-- Episode 2 -->
-                <div class="episode-card" onclick="changeDevice('ANUTH_GOOGLE_DRIVE_PREVIEW_LINK_2', 'Episode 2')">
+                <div class="episode-card" onclick="changeEpisode('ANUTH_GOOGLE_DRIVE_PREVIEW_LINK_2', 'Episode 2')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 2">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
