@@ -7,84 +7,11 @@
     <link rel="stylesheet" href="style.css">
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* YouTube style search suggestions drop-down CSS */
-        .search-container {
-            position: relative;
-        }
-        .search-box {
-            display: flex;
-            align-items: center;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 20px;
-            padding: 5px 15px;
-        }
-        .search-box input {
-            background: transparent;
-            border: none;
-            color: #fff;
-            outline: none;
-            padding: 5px;
-            font-size: 14px;
-            width: 180px;
-        }
-        .search-box i {
-            color: #888;
-        }
-        
-        /* Dropdown results list */
-        .search-results-dropdown {
-            position: absolute;
-            top: 42px;
-            left: 0;
-            width: 100%;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
-        .search-result-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            text-decoration: none;
-            color: #fff;
-            border-bottom: 1px solid #2a2a2a;
-            transition: background 0.2s;
-        }
-        .search-result-item:hover {
-            background: #333;
-        }
-        .search-result-item img {
-            width: 35px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-right: 12px;
-        }
-        .search-result-info h4 {
-            font-size: 14px;
-            margin-bottom: 3px;
-        }
-        .search-result-info p {
-            font-size: 11px;
-            color: #888;
-        }
-
-        /* Mobile Adjustments for Search */
-        @media (max-width: 768px) {
-            .search-box {
-                width: 100%;
-            }
-            .search-box input {
-                width: 100%;
-            }
-        }
-    </style>
+    
+    <!-- Firebase App, Auth, and Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -98,14 +25,22 @@
 			<a href="#">Genres</a>
         </nav>
         
-        <!-- YouTube style Search Container -->
-        <div class="search-container">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search dramas..." onkeyup="searchMovies()">
-                <i class="fa-solid fa-magnifying-glass"></i>
+        <!-- Right side container with Search & Login Button -->
+        <div class="nav-right-section">
+            <!-- YouTube style Search Container -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search dramas..." onkeyup="searchMovies()">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <!-- Dropdown results box -->
+                <div id="searchDropdown" class="search-results-dropdown"></div>
             </div>
-            <!-- Dropdown results box -->
-            <div id="searchDropdown" class="search-results-dropdown"></div>
+
+            <!-- Login / User Profile Container -->
+            <div id="authContainer">
+                <button id="navLoginBtn" class="login-nav-btn" onclick="openLoginModal()">Sign In</button>
+            </div>
         </div>
     </header>
 
@@ -141,13 +76,165 @@
         </div>
     </main>
 
+    <!-- Login Modal Box (Hidden by default) -->
+    <div id="loginModalBox" class="login-modal">
+        <div class="login-modal-content">
+            <span class="login-close-btn">&times;</span>
+            <h2>Sign In</h2>
+            
+            <!-- Real Google Sign-In Button -->
+            <button type="button" class="google-login-btn" onclick="signInWithGoogle()">
+                <i class="fa-brands fa-google"></i> Continue with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
+
+            <!-- Ordinary Login Form -->
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="login-input-group">
+                    <label>Email or Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter your username" required>
+                </div>
+                <div class="login-input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="login-submit-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <p>&copy; 2026 CM Movie World. All Rights Reserved.</p>
     </footer>
 
-    <!-- YouTube Style Live Search JavaScript -->
+    <!-- JavaScript for Firebase, Firestore, Search, and Login -->
     <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
+            authDomain: "cm-movie-world.firebaseapp.com",
+            projectId: "cm-movie-world",
+            storageBucket: "cm-movie-world.firebasestorage.app",
+            messagingSenderId: "9868705427",
+            appId: "1:9868705427:web:80d7b0a78496562bfe9766",
+            measurementId: "G-52QRFKZRBY"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // Initialize Firestore Database
+        const db = firebase.firestore();
+
+        // Check if user is already logged in on page load
+        window.onload = function() {
+            let loggedUser = localStorage.getItem("cm_username");
+            let userPhoto = localStorage.getItem("cm_userphoto");
+
+            if (loggedUser && userPhoto) {
+                let authContainer = document.getElementById("authContainer");
+                authContainer.innerHTML = `
+                    <div class="user-profile-display" onclick="handleLogout()" title="Click to Logout">
+                        <img src="${userPhoto}" alt="Profile">
+                        <span>${loggedUser}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Open Modal when clicking Sign In button
+        function openLoginModal() {
+            document.getElementById('loginModalBox').style.display = "block";
+        }
+
+        // Close Modal when clicking 'X'
+        document.querySelector('.login-close-btn').onclick = function() {
+            document.getElementById('loginModalBox').style.display = "none";
+        }
+
+        // Close Modal when clicking outside the box
+        window.onclick = function(event) {
+            let modal = document.getElementById('loginModalBox');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // --- Real Google Sign-In & Save to Firestore Database ---
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            
+            firebase.auth().signInWithPopup(provider)
+            .then((result) => {
+                let user = result.user;
+                let userName = user.displayName;   
+                let userPhoto = user.photoURL;     
+                let userEmail = user.email;
+
+                // Save user details to Firebase Firestore Database ('users' collection)
+                db.collection("users").doc(user.uid).set({
+                    name: userName,
+                    email: userEmail,
+                    photo: userPhoto,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
+                    console.log("User data successfully saved to Firestore!");
+                })
+                .catch((error) => {
+                    console.error("Error writing user to database: ", error);
+                });
+                
+                // Save to LocalStorage for quick UI display
+                localStorage.setItem("cm_username", userName);
+                localStorage.setItem("cm_userphoto", userPhoto);
+
+                alert("Welcome, " + userName + "!");
+                document.getElementById('loginModalBox').style.display = "none";
+                location.reload();
+            })
+            .catch((error) => {
+                console.error("Google Login Error: ", error.message);
+                alert("Google Login failed: " + error.message);
+            });
+        }
+
+        // Simple manual login action handler
+        function handleLogin(event) {
+            event.preventDefault();
+            let username = document.getElementById('loginUsername').value.trim();
+            if(username !== "") {
+                let defaultPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+                
+                localStorage.setItem("cm_username", username);
+                localStorage.setItem("cm_userphoto", defaultPhoto);
+
+                alert("Welcome back, " + username + "!");
+                document.getElementById('loginModalBox').style.display = "none";
+                location.reload();
+            }
+        }
+
+        // Logout function
+        function handleLogout() {
+            if(confirm("Do you want to log out?")) {
+                firebase.auth().signOut().then(() => {
+                    localStorage.removeItem("cm_username");
+                    localStorage.removeItem("cm_userphoto");
+                    location.reload();
+                }).catch(() => {
+                    localStorage.removeItem("cm_username");
+                    localStorage.removeItem("cm_userphoto");
+                    location.reload();
+                });
+            }
+        }
+
+        // --- YouTube Style Live Search Script ---
         function searchMovies() {
             let input = document.getElementById('searchInput').value.toLowerCase().trim();
             let dropdown = document.getElementById('searchDropdown');
