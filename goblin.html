@@ -175,23 +175,18 @@
             font-weight: bold;
             color: #fff;
         }
-        
-        /* Fullscreen Button සහ අනෙකුත් Icons ප්‍රමාණය පාලනය කිරීම */
         .fullscreen-btn {
             background-color: #1f1f1f;
             color: white;
             border: 1px solid #333;
-            padding: 8px 14px; /* ප්‍රමාණය ටිකක් කුඩා කළා */
+            padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 13px; /* අකුරු සහ අයිකන් ප්‍රමාණය පොඩි කළා */
+            font-size: 14px;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             transition: 0.3s;
-        }
-        .fullscreen-btn i {
-            font-size: 12px; /* අයිකන් එක කුඩා කිරීමට */
         }
         .fullscreen-btn:hover {
             background-color: #e50914;
@@ -326,15 +321,6 @@
             .block-click {
                 pointer-events: none !important;
             }
-            
-            /* ෆෝන් එක සඳහා බටන් සහ අයිකන් ප්‍රමාණය තවත් කුඩා කිරීම */
-            .fullscreen-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            .current-ep-title {
-                font-size: 15px;
-            }
         }
     </style>
 </head>
@@ -405,7 +391,7 @@
 
                 <!-- Episode 2 -->
                 <div class="episode-card" onclick="changeEpisode('ANUTH_GOOGLE_DRIVE_PREVIEW_LINK_2', 'Episode 2')">
-                    <div class="ep-1-thumb ep-thumb">
+                    <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 2">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
                     </div>
