@@ -149,6 +149,8 @@
             z-index: 1;
             background: transparent;
         }
+        
+        /* PC එක සඳහා පමණක් ක්‍රියාත්මක වන block-click එක */
         .block-click {
             position: absolute;
             top: 0;
@@ -315,12 +317,9 @@
                 gap: 12px;
             }
             
-            /* ෆෝන් එකේදී අර උඩ දකුණු කෙළවරේ අයිකන් එක ප්‍රමාණයෙන් කුඩා (Scale down) කරයි */
+            /* ෆෝන් එකේදී block-click එක ටච් නොවන සේ ක්‍රියා විරහිත කරයි */
             .block-click {
-                width: 70px !important;
-                height: 50px !important;
-                transform: scale(0.7);
-                transform-origin: top right;
+                pointer-events: none !important;
             }
         }
     </style>
