@@ -80,7 +80,7 @@
     <div id="loginModalBox" class="login-modal">
         <div class="login-modal-content">
             <span class="login-close-btn">&times;</span>
-            <h2>Sign In</h2>
+            <h2 id="modalTitle">Sign In</h2>
             
             <!-- Real Google Sign-In Button -->
             <button type="button" class="google-login-btn" onclick="signInWithGoogle()">
@@ -89,18 +89,24 @@
 
             <div class="divider"><span>OR</span></div>
 
-            <!-- Ordinary Login Form -->
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            <!-- Real Firebase Email/Password Login & Register Form -->
+            <form id="loginForm" onsubmit="handleEmailAuth(event)">
                 <div class="login-input-group">
-                    <label>Email or Username</label>
-                    <input type="text" id="loginUsername" placeholder="Enter your username" required>
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
                 </div>
                 <div class="login-input-group">
                     <label>Password</label>
                     <input type="password" id="loginPassword" placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="login-submit-btn">Login</button>
+                <button type="submit" id="authSubmitBtn" class="login-submit-btn">Login</button>
             </form>
+
+            <!-- Switch between Login and Sign Up -->
+            <p class="auth-switch-text" style="text-align: center; margin-top: 15px; font-size: 14px; color: #aaa;">
+                <span id="switchText">Don't have an account?</span> 
+                <a href="#" id="switchLink" onclick="toggleAuthMode(event)" style="color: #e50914; text-decoration: none; font-weight: bold;">Sign Up</a>
+            </p>
         </div>
     </div>
 
@@ -109,7 +115,7 @@
         <p>&copy; 2026 CM Movie World. All Rights Reserved.</p>
     </footer>
 
-    <!-- JavaScript for Firebase, Firestore, Search, and Login -->
+    <!-- JavaScript for Firebase, Firestore, Search, and Authentication -->
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -127,23 +133,28 @@
             firebase.initializeApp(firebaseConfig);
         }
 
-        // Initialize Firestore Database
+        // Initialize Firestore Database & Auth
         const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let isSignUpMode = false; // Track whether modal is in Login or Sign Up mode
 
         // Check if user is already logged in on page load
         window.onload = function() {
-            let loggedUser = localStorage.getItem("cm_username");
-            let userPhoto = localStorage.getItem("cm_userphoto");
-
-            if (loggedUser && userPhoto) {
+            auth.onAuthStateChanged((user) => {
                 let authContainer = document.getElementById("authContainer");
-                authContainer.innerHTML = `
-                    <div class="user-profile-display" onclick="handleLogout()" title="Click to Logout">
-                        <img src="${userPhoto}" alt="Profile">
-                        <span>${loggedUser}</span>
-                    </div>
-                `;
-            }
+                if (user) {
+                    let displayName = user.displayName || user.email.split('@')[0];
+                    let displayPhoto = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+                    
+                    authContainer.innerHTML = `
+                        <div class="user-profile-display" onclick="handleLogout()" title="Click to Logout" style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
+                            <img src="${displayPhoto}" alt="Profile" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                            <span style="color: white; font-weight: 500;">${displayName}</span>
+                        </div>
+                    `;
+                }
+            });
         }
 
         // Open Modal when clicking Sign In button
@@ -164,38 +175,46 @@
             }
         }
 
+        // Toggle between Login and Sign Up views inside Modal
+        function toggleAuthMode(event) {
+            event.preventDefault();
+            isSignUpMode = !isSignUpMode;
+            let modalTitle = document.getElementById('modalTitle');
+            let authSubmitBtn = document.getElementById('authSubmitBtn');
+            let switchText = document.getElementById('switchText');
+            let switchLink = document.getElementById('switchLink');
+
+            if (isSignUpMode) {
+                modalTitle.innerText = "Create Account";
+                authSubmitBtn.innerText = "Sign Up";
+                switchText.innerText = "Already have an account?";
+                switchLink.innerText = "Sign In";
+            } else {
+                modalTitle.innerText = "Sign In";
+                authSubmitBtn.innerText = "Login";
+                switchText.innerText = "Don't have an account?";
+                switchLink.innerText = "Sign Up";
+            }
+        }
+
         // --- Real Google Sign-In & Save to Firestore Database ---
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             
-            firebase.auth().signInWithPopup(provider)
+            auth.signInWithPopup(provider)
             .then((result) => {
                 let user = result.user;
-                let userName = user.displayName;   
-                let userPhoto = user.photoURL;     
-                let userEmail = user.email;
-
+                
                 // Save user details to Firebase Firestore Database ('users' collection)
                 db.collection("users").doc(user.uid).set({
-                    name: userName,
-                    email: userEmail,
-                    photo: userPhoto,
+                    name: user.displayName,
+                    email: user.email,
+                    photo: user.photoURL,
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                })
-                .then(() => {
-                    console.log("User data successfully saved to Firestore!");
-                })
-                .catch((error) => {
-                    console.error("Error writing user to database: ", error);
-                });
-                
-                // Save to LocalStorage for quick UI display
-                localStorage.setItem("cm_username", userName);
-                localStorage.setItem("cm_userphoto", userPhoto);
+                }, { merge: true });
 
-                alert("Welcome, " + userName + "!");
+                alert("Welcome, " + user.displayName + "!");
                 document.getElementById('loginModalBox').style.display = "none";
-                location.reload();
             })
             .catch((error) => {
                 console.error("Google Login Error: ", error.message);
@@ -203,33 +222,53 @@
             });
         }
 
-        // Simple manual login action handler
-        function handleLogin(event) {
+        // --- Real Email & Password Login / Register Handler ---
+        function handleEmailAuth(event) {
             event.preventDefault();
-            let username = document.getElementById('loginUsername').value.trim();
-            if(username !== "") {
-                let defaultPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
-                
-                localStorage.setItem("cm_username", username);
-                localStorage.setItem("cm_userphoto", defaultPhoto);
+            let email = document.getElementById('loginEmail').value.trim();
+            let password = document.getElementById('loginPassword').value;
 
-                alert("Welcome back, " + username + "!");
-                document.getElementById('loginModalBox').style.display = "none";
-                location.reload();
+            if (isSignUpMode) {
+                // Register new user
+                auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    let user = userCredential.user;
+                    let defaultPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+
+                    // Save to Firestore
+                    db.collection("users").doc(user.uid).set({
+                        name: email.split('@')[0],
+                        email: email,
+                        photo: defaultPhoto,
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    alert("Account created successfully!");
+                    document.getElementById('loginModalBox').style.display = "none";
+                })
+                .catch((error) => {
+                    alert("Sign Up Failed: " + error.message);
+                });
+            } else {
+                // Login existing user
+                auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert("Login Successful!");
+                    document.getElementById('loginModalBox').style.display = "none";
+                })
+                .catch((error) => {
+                    alert("Login Failed: " + error.message);
+                });
             }
         }
 
         // Logout function
         function handleLogout() {
             if(confirm("Do you want to log out?")) {
-                firebase.auth().signOut().then(() => {
-                    localStorage.removeItem("cm_username");
-                    localStorage.removeItem("cm_userphoto");
+                auth.signOut().then(() => {
                     location.reload();
-                }).catch(() => {
-                    localStorage.removeItem("cm_username");
-                    localStorage.removeItem("cm_userphoto");
-                    location.reload();
+                }).catch((error) => {
+                    console.error("Logout Error: ", error);
                 });
             }
         }
