@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +15,9 @@
         body {
             background-color: #121212;
             color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Navigation Bar */
@@ -27,6 +30,8 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .logo {
             font-size: 24px;
@@ -37,10 +42,14 @@
         .logo span {
             color: #e50914;
         }
+        nav {
+            display: flex;
+            gap: 10px;
+        }
         nav a {
             color: #b3b3b3;
             text-decoration: none;
-            margin: 0 15px;
+            margin: 0 10px;
             font-weight: 600;
             transition: 0.3s;
         }
@@ -58,7 +67,7 @@
             display: flex;
             gap: 30px;
             align-items: flex-end;
-            min-height: 300px;
+            min-height: 320px;
         }
         .banner-poster {
             width: 180px;
@@ -79,7 +88,8 @@
         }
         .meta-tags {
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
             font-size: 14px;
             color: #aaa;
             margin-bottom: 15px;
@@ -103,6 +113,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 30px 50px;
+            flex: 1;
+            width: 100%;
         }
 
         .back-link {
@@ -137,7 +149,6 @@
             z-index: 1;
             background: transparent;
         }
-        /* Google Drive Pop-out icon block click */
         .block-click {
             position: absolute;
             top: 0;
@@ -154,6 +165,8 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .current-ep-title {
             font-size: 18px;
@@ -187,7 +200,7 @@
         }
         .episodes-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 20px;
         }
         .episode-card {
@@ -197,6 +210,7 @@
             cursor: pointer;
             transition: transform 0.3s, box-shadow 0.3s;
             border: 1px solid #2a2a2a;
+            width: 100%;
         }
         .episode-card:hover {
             transform: translateY(-5px);
@@ -243,6 +257,9 @@
             font-size: 15px;
             margin-bottom: 4px;
             color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .ep-info p {
             font-size: 12px;
@@ -252,12 +269,51 @@
         /* Footer */
         footer {
             text-align: center;
-            padding: 25px;
+            padding: 20px;
             background-color: #161616;
             color: #777;
             font-size: 14px;
-            margin-top: 60px;
+            margin-top: auto;
             border-top: 1px solid #222;
+        }
+
+        /* --- Mobile Responsive Media Queries --- */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            nav {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .movie-banner {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                padding: 30px 20px;
+            }
+            .banner-poster {
+                width: 140px;
+                height: 200px;
+            }
+            .banner-info h1 {
+                font-size: 26px;
+            }
+            .meta-tags {
+                justify-content: center;
+            }
+            .banner-info p {
+                font-size: 14px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .episodes-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
         }
     </style>
 </head>
@@ -364,11 +420,9 @@
             player.src = videoUrl;
             document.getElementById('epTitleDisplay').innerText = "Now Playing: " + epName;
             
-            // Scroll smoothly up to the player when an episode is clicked
             document.getElementById('playerBox').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Fullscreen Function
         function toggleFullscreen() {
             const playerBox = document.getElementById('playerBox');
             if (!document.fullscreenElement) {

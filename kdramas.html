@@ -10,10 +10,11 @@
             max-width: 1200px;
             margin: 40px auto;
             padding: 0 20px;
+            flex: 1;
         }
         .movie-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -22,13 +23,14 @@
             border-radius: 8px;
             overflow: hidden;
             transition: transform 0.3s;
+            width: 100%;
         }
         .movie-card:hover {
-            transform: scale(1.05);
+            transform: translateY(-5px);
         }
         .card-img {
             position: relative;
-            height: 380px;
+            height: 280px;
         }
         .card-img img {
             width: 100%;
@@ -44,6 +46,7 @@
             padding: 4px 8px;
             font-size: 12px;
             border-radius: 4px;
+            font-weight: bold;
         }
         .card-info {
             padding: 15px;
@@ -51,39 +54,72 @@
         }
         .card-info h3 {
             margin: 0 0 5px 0;
-            font-size: 18px;
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .card-info p {
             margin: 0;
             color: #aaa;
-            font-size: 14px;
+            font-size: 12px;
         }
         /* Link එකේ යටින් ඉරි වැටෙන එක සහ පාට වෙනස්වීම ඉවත් කිරීමට */
         .movie-grid a {
             text-decoration: none;
             color: inherit;
+            display: block;
+            width: 100%;
         }
         .movie-grid a:hover {
             color: inherit;
         }
+
+        /* --- Mobile Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px !important;
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 15px;
+            }
+            nav {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            nav a {
+                margin: 0 10px !important;
+            }
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+            }
+            .card-img {
+                height: 210px;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
-<body style="background-color: #141414; font-family: Arial, sans-serif;">
+<body style="background-color: #141414; font-family: Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; margin: 0; color: #fff;">
 
     <!-- Navigation Bar -->
-    <header style="padding: 20px; background: #000; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="color: #E50914; margin: 0;">CM <span style="color: white;">Movie World</span></h2>
+    <header style="padding: 20px 50px; background: #000; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
+        <h2 style="color: #E50914; margin: 0; font-size: 24px;">CM <span style="color: white;">Movie World</span></h2>
         <nav>
-            <a href="index.html" style="color: white; text-decoration: none; margin-right: 20px;">Home</a>
+            <a href="index.html" style="color: white; text-decoration: none; margin-right: 20px; font-weight: 600;">Home</a>
             <a href="kdramas.html" style="color: #E50914; text-decoration: none; margin-right: 20px; font-weight: bold;">K-Dramas</a>
-            <a href="#" style="color: white; text-decoration: none; margin-right: 20px;">Movies</a>
-            <a href="#" style="color: white; text-decoration: none;">Genres</a>
+            <a href="#" style="color: white; text-decoration: none; margin-right: 20px; font-weight: 600;">Movies</a>
+            <a href="#" style="color: white; text-decoration: none; font-weight: 600;">Genres</a>
         </nav>
     </header>
 
     <!-- K-Dramas Section -->
     <main class="container">
-        <h2 style="color: white; border-left: 4px solid #E50914; padding-left: 10px;">All K-Dramas</h2>
+        <h2 style="color: white; border-left: 4px solid #E50914; padding-left: 10px; font-size: 22px;">All K-Dramas</h2>
         
         <div class="movie-grid">
             <!-- Goblin Card -->
@@ -105,7 +141,7 @@
     </main>
 
     <!-- Footer -->
-    <footer style="text-align: center; padding: 30px; color: #777; margin-top: 50px;">
+    <footer style="text-align: center; padding: 20px; color: #777; margin-top: auto; background: #101010; border-top: 1px solid #222; font-size: 14px;">
         <p>© 2026 CM Movie World. All Rights Reserved.</p>
     </footer>
 

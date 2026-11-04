@@ -44,7 +44,7 @@
             border-radius: 8px;
             overflow: hidden;
             z-index: 1000;
-            display: none; /* මුලින් සඟවා තබයි */
+            display: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
         .search-result-item {
@@ -73,6 +73,16 @@
         .search-result-info p {
             font-size: 11px;
             color: #888;
+        }
+
+        /* Mobile Adjustments for Search */
+        @media (max-width: 768px) {
+            .search-box {
+                width: 100%;
+            }
+            .search-box input {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -114,7 +124,7 @@
         
         <div class="movie-grid" id="movieGrid">
             
-            <!-- Movie Card 1 (Goblin) - data-title, data-url, data-img, data-desc අත්‍යවශ්‍යයි -->
+            <!-- Movie Card 1 (Goblin) -->
             <a href="goblin.html" class="movie-card-link" data-title="goblin" data-url="goblin.html" data-img="goblin 1.jpg" data-desc="Fantasy, Romance • 16 Episodes">
                 <div class="movie-card">
                     <div class="card-img">
@@ -127,25 +137,6 @@
                     </div>
                 </div>
             </a>
-
-            <!-- 
-                =================================================
-                ඉස්සරහට අලුත් මූවි එකක් දානකොට මෙන්න මේ විදිහට attributes දාන්න:
-                =================================================
-                
-                <a href="movie-page.html" class="movie-card-link" data-title="vincenzo" data-url="movie-page.html" data-img="poster.jpg" data-desc="Crime, Action • 20 Episodes">
-                    <div class="movie-card">
-                        <div class="card-img">
-                            <img src="poster.jpg" alt="Vincenzo">
-                            <span class="badge">NEW</span>
-                        </div>
-                        <div class="card-info">
-                            <h3>Vincenzo</h3>
-                            <p>Crime, Action • 20 Episodes</p>
-                        </div>
-                    </div>
-                </a>
-            -->
 
         </div>
     </main>
@@ -163,12 +154,10 @@
             let grid = document.getElementById('movieGrid');
             let cards = grid.getElementsByClassName('movie-card-link');
 
-            // Dropdown එක clear කරගැනීම
             dropdown.innerHTML = "";
 
             if (input === "") {
                 dropdown.style.display = "none";
-                // සර්ච් එක හිස් නම් හැම කාඩ් එකක්ම සාමාන්‍ය පරිදි පෙන්වන්න
                 for (let i = 0; i < cards.length; i++) {
                     cards[i].style.display = "";
                 }
@@ -185,10 +174,9 @@
                 let cardName = cards[i].querySelector('h3').innerText;
 
                 if (title.includes(input)) {
-                    cards[i].style.display = ""; // Grid එකේ කාඩ් එකත් පෙන්වයි
+                    cards[i].style.display = "";
                     matchCount++;
 
-                    // YouTube එකේ වගේ Dropdown එකට result එක එකතු කිරීම
                     let item = document.createElement('a');
                     item.href = url;
                     item.className = 'search-result-item';
@@ -201,11 +189,10 @@
                     `;
                     dropdown.appendChild(item);
                 } else {
-                    cards[i].style.display = "none"; // මැච් නොවන ඒවා සඟවයි
+                    cards[i].style.display = "none";
                 }
             }
 
-            // ප්‍රතිඵල තිබේ නම් dropdown එක පෙන්වන්න, නැත්නම් වසන්න
             if (matchCount > 0) {
                 dropdown.style.display = "block";
             } else {
@@ -213,7 +200,6 @@
             }
         }
 
-        // සර්ච් බාර් එකෙන් පිටත ක්ලික් කළහොත් dropdown එක වැසීමට
         document.addEventListener('click', function(e) {
             let searchBox = document.querySelector('.search-container');
             if (!searchBox.contains(e.target)) {
