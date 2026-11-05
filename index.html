@@ -139,13 +139,13 @@
 
         let isSignUpMode = false;
 
-        // Check if user is logged in on page load (Profile Photo with Professional Dropdown Menu)
+        // Check if user is logged in on page load (Profile Photo with Username & Sign Out Dropdown)
         window.onload = function() {
             auth.onAuthStateChanged((user) => {
                 let authContainer = document.getElementById("authContainer");
                 if (user) {
                     let displayPhoto = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
-                    let userEmail = user.email || "user@cmmovieworld.com";
+                    let userName = user.displayName || user.email.split('@')[0] || "User";
                     
                     authContainer.innerHTML = `
                         <div class="profile-wrapper">
@@ -155,12 +155,9 @@
                             <div id="profileDropdown" class="profile-dropdown-menu">
                                 <div class="profile-menu-header">
                                     <span>Signed in as</span>
-                                    <span class="user-email-text">${userEmail}</span>
+                                    <span class="user-name-text">${userName}</span>
                                 </div>
-                                <a href="#"><i class="fa-solid fa-heart"></i> My Watchlist</a>
-                                <a href="#"><i class="fa-solid fa-gear"></i> Account Settings</a>
-                                <div class="profile-menu-divider"></div>
-                                <button class="sign-out-btn" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+                                <button onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
                             </div>
                         </div>
                     `;
