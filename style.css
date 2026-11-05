@@ -34,7 +34,7 @@ header {
 }
 
 .logo span {
-    color: #e50914; /* Netflix Red vibe */
+    color: #e50914;
 }
 
 nav {
@@ -55,11 +55,12 @@ nav a:hover, nav a.active {
     color: #fff;
 }
 
-/* Navbar Right Section (Search + Login Button) */
+/* Navbar Right Section */
 .nav-right-section {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
 }
 
 .search-container {
@@ -88,7 +89,7 @@ nav a:hover, nav a.active {
     color: #b3b3b3;
 }
 
-/* YouTube style Search Suggestions Dropdown CSS */
+/* Search Dropdown */
 .search-results-dropdown {
     position: absolute;
     top: 45px;
@@ -136,7 +137,7 @@ nav a:hover, nav a.active {
     color: #888;
 }
 
-/* --- Netflix Style Login Button in Navbar --- */
+/* Login Button */
 .login-nav-btn {
     background-color: #e50914;
     color: white;
@@ -154,7 +155,12 @@ nav a:hover, nav a.active {
     background-color: #f6121d;
 }
 
-/* --- Logged-in User Profile Display (Photo Only / No Name) --- */
+/* --- Profile Wrapper & Dropdown Menu --- */
+.profile-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .user-profile-display {
     display: flex;
     align-items: center;
@@ -180,12 +186,46 @@ nav a:hover, nav a.active {
     object-fit: cover;
 }
 
-/* නම පෙන්වීම සම්පූර්ණයෙන්ම වැළැක්වීමට */
 .user-profile-display span {
     display: none !important;
 }
 
-/* --- Netflix Style Modal Box (Pop-up) --- */
+/* Dropdown Menu Box */
+.profile-dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50px;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    width: 150px;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.8);
+    z-index: 3000;
+    overflow: hidden;
+}
+
+.profile-dropdown-menu button {
+    width: 100%;
+    padding: 12px 15px;
+    background: transparent;
+    border: none;
+    color: #ff4d4d;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.profile-dropdown-menu button:hover {
+    background-color: #2a2a2a;
+}
+
+/* Modal Box */
 .login-modal {
     display: none; 
     position: fixed;
@@ -218,7 +258,6 @@ nav a:hover, nav a.active {
     color: #fff;
 }
 
-/* Google Sign-In Button */
 .google-login-btn {
     width: 100%;
     padding: 12px;
@@ -245,7 +284,6 @@ nav a:hover, nav a.active {
     background-color: #f1f1f1;
 }
 
-/* OR Divider */
 .divider {
     text-align: center;
     border-bottom: 1px solid #333;
@@ -261,7 +299,6 @@ nav a:hover, nav a.active {
     letter-spacing: 1px;
 }
 
-/* Modal Input Fields */
 .login-input-group {
     margin-bottom: 18px;
     text-align: left;
@@ -289,7 +326,6 @@ nav a:hover, nav a.active {
     background-color: #444;
 }
 
-/* Submit Button inside Modal */
 .login-submit-btn {
     width: 100%;
     padding: 13px;
@@ -308,7 +344,6 @@ nav a:hover, nav a.active {
     background-color: #f6121d;
 }
 
-/* Close Button (X) */
 .login-close-btn {
     position: absolute;
     right: 20px;
@@ -373,7 +408,6 @@ nav a:hover, nav a.active {
     padding-left: 10px;
 }
 
-/* Movie Grid - Phone & PC Responsive */
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -441,11 +475,6 @@ nav a:hover, nav a.active {
     width: 100%;
 }
 
-.movie-grid a:hover {
-    color: inherit;
-}
-
-/* Footer */
 footer {
     text-align: center;
     padding: 20px;
@@ -456,7 +485,7 @@ footer {
     margin-top: auto;
 }
 
-/* --- Mobile Responsive Queries --- */
+/* Mobile Responsive */
 @media (max-width: 768px) {
     header {
         padding: 12px 15px;

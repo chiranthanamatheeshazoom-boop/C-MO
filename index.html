@@ -137,9 +137,9 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        let isSignUpMode = false; // Track whether modal is in Login or Sign Up mode
+        let isSignUpMode = false;
 
-        // Check if user is already logged in on page load (Profile Photo only)
+        // Check if user is logged in on page load (Profile Photo with Dropdown Menu)
         window.onload = function() {
             auth.onAuthStateChanged((user) => {
                 let authContainer = document.getElementById("authContainer");
@@ -147,13 +147,37 @@
                     let displayPhoto = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
                     
                     authContainer.innerHTML = `
-                        <div class="user-profile-display" onclick="handleLogout()" title="Click to Logout">
-                            <img src="${displayPhoto}" alt="Profile">
+                        <div class="profile-wrapper">
+                            <div class="user-profile-display" onclick="toggleProfileMenu(event)" title="Account Menu">
+                                <img src="${displayPhoto}" alt="Profile">
+                            </div>
+                            <div id="profileDropdown" class="profile-dropdown-menu">
+                                <button onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+                            </div>
                         </div>
                     `;
                 }
             });
         }
+
+        // Toggle Profile Dropdown Menu
+        function toggleProfileMenu(event) {
+            event.stopPropagation();
+            let menu = document.getElementById('profileDropdown');
+            if (menu.style.display === "block") {
+                menu.style.display = "none";
+            } else {
+                menu.style.display = "block";
+            }
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function() {
+            let menu = document.getElementById('profileDropdown');
+            if (menu) {
+                menu.style.display = "none";
+            }
+        });
 
         // Open Modal when clicking Sign In button
         function openLoginModal() {
@@ -165,7 +189,6 @@
             document.getElementById('loginModalBox').style.display = "none";
         }
 
-        // Close Modal when clicking outside the box
         window.onclick = function(event) {
             let modal = document.getElementById('loginModalBox');
             if (event.target == modal) {
@@ -195,7 +218,7 @@
             }
         }
 
-        // --- Real Google Sign-In & Save to Firestore Database ---
+        // --- Real Google Sign-In ---
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             
@@ -219,7 +242,7 @@
             });
         }
 
-        // --- Real Email & Password Login / Register Handler ---
+        // --- Real Email & Password Login / Register ---
         function handleEmailAuth(event) {
             event.preventDefault();
             let email = document.getElementById('loginEmail').value.trim();
@@ -258,13 +281,11 @@
 
         // Logout function
         function handleLogout() {
-            if(confirm("Do you want to log out?")) {
-                auth.signOut().then(() => {
-                    location.reload();
-                }).catch((error) => {
-                    console.error("Logout Error: ", error);
-                });
-            }
+            auth.signOut().then(() => {
+                location.reload();
+            }).catch((error) => {
+                console.error("Logout Error: ", error);
+            });
         }
 
         // --- YouTube Style Live Search Script ---
