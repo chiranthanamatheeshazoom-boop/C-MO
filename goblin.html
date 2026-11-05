@@ -149,17 +149,19 @@
             height: 100%;
             object-fit: contain;
             outline: none;
+            background-color: #000;
         }
         
-        /* ෆෝන් එකේ ෆුල් ස්ක්‍රීන් දාපුවාම වීඩියෝ එක කපී යාම වැළැක්වීමට එකතු කළ කොටස */
+        /* ෆෝන් එකේ ෆුල් ස්ක්‍රීන් දාපුවාම වීඩියෝ එක කපී යාම වැළැක්වීමට සහ ස්ක්‍රීන් එකට මැච් වීමට */
         video:fullscreen {
-            object-fit: contain;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
         }
         video:-webkit-full-screen {
-            object-fit: contain;
-        }
-        video:-moz-full-screen {
-            object-fit: contain;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
         }
 
         .player-controls-bar {
