@@ -23,7 +23,6 @@ header {
     position: sticky;
     top: 0;
     z-index: 100;
-    flex-wrap: wrap;
     gap: 15px;
 }
 
@@ -31,6 +30,7 @@ header {
     font-size: 24px;
     font-weight: bold;
     color: #fff;
+    white-space: nowrap;
 }
 
 .logo span {
@@ -59,7 +59,7 @@ nav a:hover, nav a.active {
 .nav-right-section {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .search-container {
@@ -141,12 +141,13 @@ nav a:hover, nav a.active {
     background-color: #e50914;
     color: white;
     border: none;
-    padding: 8px 18px;
-    font-size: 14px;
+    padding: 8px 16px;
+    font-size: 13px;
     font-weight: bold;
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.3s ease;
+    white-space: nowrap;
 }
 
 .login-nav-btn:hover {
@@ -157,13 +158,14 @@ nav a:hover, nav a.active {
 .user-profile-display {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
     background: #222;
-    padding: 5px 12px 5px 5px;
+    padding: 4px 10px 4px 4px;
     border-radius: 20px;
     border: 1px solid #444;
     transition: background 0.2s;
+    white-space: nowrap;
 }
 
 .user-profile-display:hover {
@@ -171,15 +173,15 @@ nav a:hover, nav a.active {
 }
 
 .user-profile-display img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%; /* රවුම් හැඩය ලබා දීමට */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
     object-fit: cover;
 }
 
 .user-profile-display span {
     color: #fff;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -457,36 +459,25 @@ footer {
 /* --- Mobile Responsive Queries --- */
 @media (max-width: 768px) {
     header {
-        padding: 15px 20px;
-        flex-direction: column;
-        align-items: stretch;
+        padding: 12px 15px;
+        justify-content: space-between;
     }
 
     nav {
-        justify-content: center;
-        flex-wrap: wrap;
+        display: none; /* පුංචි ෆෝන් ස්ක්‍රීන් වල උඩ මෙනු එක සඟවා, ලෝගුව සහ සර්ච්/ලොගින් එක පමණක් පෙන්වීමට අවශ්‍ය නම් හෝ තබා ගැනීමට නම් මෙහි වෙනස් කළ හැක. දැනට නෙට්ෆ්ලික්ස් ස්ටයිල් එකට සර්ච් එක ළඟින්ම බටන් එක වැටීමට සකසා ඇත */
     }
 
     .nav-right-section {
-        flex-direction: column;
-        width: 100%;
-        gap: 12px;
-    }
-
-    .search-container {
-        width: 100%;
+        gap: 8px;
     }
 
     .search-box {
-        width: 100%;
+        padding: 6px 10px;
     }
 
     .search-box input {
-        width: 100%;
-    }
-
-    .login-nav-btn {
-        width: 100%;
+        width: 110px; /* ෆෝන් එකේ සර්ච් බාර් එකට ඉඩ සලසා ඇත */
+        font-size: 13px;
     }
 
     .hero {

@@ -139,18 +139,16 @@
 
         let isSignUpMode = false; // Track whether modal is in Login or Sign Up mode
 
-        // Check if user is already logged in on page load
+        // Check if user is already logged in on page load (Profile Photo only)
         window.onload = function() {
             auth.onAuthStateChanged((user) => {
                 let authContainer = document.getElementById("authContainer");
                 if (user) {
-                    let displayName = user.displayName || user.email.split('@')[0];
                     let displayPhoto = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
                     
                     authContainer.innerHTML = `
-                        <div class="user-profile-display" onclick="handleLogout()" title="Click to Logout" style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
-                            <img src="${displayPhoto}" alt="Profile" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
-                            <span style="color: white; font-weight: 500;">${displayName}</span>
+                        <div class="user-profile-display" onclick="handleLogout()" title="Click to Logout">
+                            <img src="${displayPhoto}" alt="Profile">
                         </div>
                     `;
                 }
@@ -205,7 +203,6 @@
             .then((result) => {
                 let user = result.user;
                 
-                // Save user details to Firebase Firestore Database ('users' collection)
                 db.collection("users").doc(user.uid).set({
                     name: user.displayName,
                     email: user.email,
@@ -229,13 +226,11 @@
             let password = document.getElementById('loginPassword').value;
 
             if (isSignUpMode) {
-                // Register new user
                 auth.createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     let user = userCredential.user;
                     let defaultPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
 
-                    // Save to Firestore
                     db.collection("users").doc(user.uid).set({
                         name: email.split('@')[0],
                         email: email,
@@ -250,7 +245,6 @@
                     alert("Sign Up Failed: " + error.message);
                 });
             } else {
-                // Login existing user
                 auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     alert("Login Successful!");
