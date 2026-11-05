@@ -140,27 +140,15 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.7);
             aspect-ratio: 16 / 9;
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .player-container iframe {
+        .player-container video {
             width: 100%;
             height: 100%;
-            border: none;
-            position: relative;
-            z-index: 1;
-            background: transparent;
-        }
-        
-        /* PC saha Phone dekema wada karana block-click eka */
-        .block-click {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 140px;
-            height: 65px;
-            z-index: 10;
-            background: transparent;
-            cursor: default;
-            pointer-events: auto !important;
+            object-fit: contain;
+            outline: none;
         }
         
         .player-controls-bar {
@@ -317,13 +305,6 @@
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
                 gap: 12px;
             }
-            
-            /* Phone eke block-click eka aniwarenma wada karanna */
-            .block-click {
-                pointer-events: auto !important;
-                width: 120px;
-                height: 55px;
-            }
         }
     </style>
 </head>
@@ -363,8 +344,10 @@
         <!-- Video Player Section -->
         <div class="player-section">
             <div class="player-container" id="playerBox">
-                <div class="block-click"></div>
-                <iframe id="moviePlayer" src="https://drive.google.com/file/d/1FKzkCGRDJGqxrSULaf-qh-1DQqtT9pVt/preview" allow="autoplay"></iframe>
+                <video id="moviePlayer" controls controlsList="nodownload" oncontextmenu="return false;" preload="auto" playsinline>
+                    <source src="https://archive.org/download/goblin.-s-01e-01.-korean.-hdtv-cm-movie-480-p/Goblin.S01e01.Korean.Hdtv-[Cinesubz.Com]-480P.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
             </div>
             
             <div class="player-controls-bar">
@@ -375,13 +358,13 @@
             </div>
         </div>
 
-        <!-- Episodes Grid Section (Netflix Style) -->
+        <!-- Episodes Grid Section -->
         <div class="episodes-section">
             <h3>Episodes</h3>
             
             <div class="episodes-grid">
                 <!-- Episode 1 -->
-                <div class="episode-card" onclick="changeEpisode('https://drive.google.com/file/d/1FKzkCGRDJGqxrSULaf-qh-1DQqtT9pVt/preview', 'Episode 1')">
+                <div class="episode-card" onclick="changeEpisode('https://archive.org/download/goblin.-s-01e-01.-korean.-hdtv-cm-movie-480-p/Goblin.S01e01.Korean.Hdtv-[Cinesubz.Com]-480P.mp4', 'Episode 1')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 1">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
@@ -393,7 +376,7 @@
                 </div>
 
                 <!-- Episode 2 -->
-                <div class="episode-card" onclick="changeEpisode('ANUTH_GOOGLE_DRIVE_PREVIEW_LINK_2', 'Episode 2')">
+                <div class="episode-card" onclick="changeEpisode('ANUTH_EPISODE_ARCHIVE_LINK_2', 'Episode 2')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 2">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
@@ -405,7 +388,7 @@
                 </div>
 
                 <!-- Episode 3 -->
-                <div class="episode-card" onclick="changeEpisode('ANUTH_GOOGLE_DRIVE_PREVIEW_LINK_3', 'Episode 3')">
+                <div class="episode-card" onclick="changeEpisode('ANUTH_EPISODE_ARCHIVE_LINK_3', 'Episode 3')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 3">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
@@ -428,6 +411,8 @@
         function changeEpisode(videoUrl, epName) {
             const player = document.getElementById('moviePlayer');
             player.src = videoUrl;
+            player.load();
+            player.play();
             document.getElementById('epTitleDisplay').innerText = "Now Playing: " + epName;
             
             document.getElementById('playerBox').scrollIntoView({ behavior: 'smooth' });
@@ -435,12 +420,22 @@
 
         function toggleFullscreen() {
             const playerBox = document.getElementById('playerBox');
-            if (!document.fullscreenElement) {
-                playerBox.requestFullscreen().catch(err => {
-                    alert(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
+            const player = document.getElementById('moviePlayer');
+            
+            if (player.requestFullscreen) {
+                player.requestFullscreen();
+            } else if (player.webkitRequestFullscreen) { /* Safari */
+                player.webkitRequestFullscreen();
+            } else if (player.msRequestFullscreen) { /* IE11 */
+                player.msRequestFullscreen();
             } else {
-                document.exitFullscreen();
+                if (!document.fullscreenElement) {
+                    playerBox.requestFullscreen().catch(err => {
+                        alert(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
             }
         }
     </script>
