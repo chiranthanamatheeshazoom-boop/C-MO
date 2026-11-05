@@ -133,13 +133,12 @@
             firebase.initializeApp(firebaseConfig);
         }
 
-        // Initialize Firestore Database & Auth
         const db = firebase.firestore();
         const auth = firebase.auth();
 
         let isSignUpMode = false;
 
-        // Check if user is logged in on page load (Profile Photo with Username & Sign Out Dropdown)
+        // Check if user is logged in on page load
         window.onload = function() {
             auth.onAuthStateChanged((user) => {
                 let authContainer = document.getElementById("authContainer");
@@ -161,6 +160,8 @@
                             </div>
                         </div>
                     `;
+                } else {
+                    authContainer.innerHTML = `<button id="navLoginBtn" class="login-nav-btn" onclick="openLoginModal()">Sign In</button>`;
                 }
             });
         }
@@ -169,10 +170,12 @@
         function toggleProfileMenu(event) {
             event.stopPropagation();
             let menu = document.getElementById('profileDropdown');
-            if (menu.style.display === "block") {
-                menu.style.display = "none";
-            } else {
-                menu.style.display = "block";
+            if (menu) {
+                if (menu.style.display === "block") {
+                    menu.style.display = "none";
+                } else {
+                    menu.style.display = "block";
+                }
             }
         }
 
@@ -201,7 +204,6 @@
             }
         }
 
-        // Toggle between Login and Sign Up views inside Modal
         function toggleAuthMode(event) {
             event.preventDefault();
             isSignUpMode = !isSignUpMode;
@@ -223,14 +225,11 @@
             }
         }
 
-        // --- Real Google Sign-In ---
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            
             auth.signInWithPopup(provider)
             .then((result) => {
                 let user = result.user;
-                
                 db.collection("users").doc(user.uid).set({
                     name: user.displayName,
                     email: user.email,
@@ -247,7 +246,6 @@
             });
         }
 
-        // --- Real Email & Password Login / Register ---
         function handleEmailAuth(event) {
             event.preventDefault();
             let email = document.getElementById('loginEmail').value.trim();
@@ -284,7 +282,6 @@
             }
         }
 
-        // Logout function
         function handleLogout() {
             auth.signOut().then(() => {
                 location.reload();
@@ -293,7 +290,6 @@
             });
         }
 
-        // --- YouTube Style Live Search Script ---
         function searchMovies() {
             let input = document.getElementById('searchInput').value.toLowerCase().trim();
             let dropdown = document.getElementById('searchDropdown');
@@ -348,8 +344,9 @@
 
         document.addEventListener('click', function(e) {
             let searchBox = document.querySelector('.search-container');
-            if (!searchBox.contains(e.target)) {
-                document.getElementById('searchDropdown').style.display = 'none';
+            if (searchBox && !searchBox.contains(e.target)) {
+                let dropdown = document.getElementById('searchDropdown');
+                if(dropdown) dropdown.style.display = 'none';
             }
         });
     </script>
