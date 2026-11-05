@@ -154,18 +154,19 @@ nav a:hover, nav a.active {
     background-color: #f6121d;
 }
 
-/* --- Logged-in User Profile Display (Circle Photo + Name) --- */
+/* --- Logged-in User Profile Display (Photo Only / No Name) --- */
 .user-profile-display {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
     cursor: pointer;
     background: #222;
-    padding: 4px 10px 4px 4px;
-    border-radius: 20px;
+    padding: 3px;
+    border-radius: 50%;
     border: 1px solid #444;
     transition: background 0.2s;
-    white-space: nowrap;
+    width: 38px;
+    height: 38px;
 }
 
 .user-profile-display:hover {
@@ -173,16 +174,15 @@ nav a:hover, nav a.active {
 }
 
 .user-profile-display img {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
 }
 
+/* නම පෙන්වීම සම්පූර්ණයෙන්ම වැළැක්වීමට */
 .user-profile-display span {
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
+    display: none !important;
 }
 
 /* --- Netflix Style Modal Box (Pop-up) --- */
@@ -463,10 +463,6 @@ footer {
         justify-content: space-between;
     }
 
-    nav {
-        display: none; /* පුංචි ෆෝන් ස්ක්‍රීන් වල උඩ මෙනු එක සඟවා, ලෝගුව සහ සර්ච්/ලොගින් එක පමණක් පෙන්වීමට අවශ්‍ය නම් හෝ තබා ගැනීමට නම් මෙහි වෙනස් කළ හැක. දැනට නෙට්ෆ්ලික්ස් ස්ටයිල් එකට සර්ච් එක ළඟින්ම බටන් එක වැටීමට සකසා ඇත */
-    }
-
     .nav-right-section {
         gap: 8px;
     }
@@ -476,7 +472,7 @@ footer {
     }
 
     .search-box input {
-        width: 110px; /* ෆෝන් එකේ සර්ච් බාර් එකට ඉඩ සලසා ඇත */
+        width: 110px;
         font-size: 13px;
     }
 
