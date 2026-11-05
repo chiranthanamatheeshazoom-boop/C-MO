@@ -363,7 +363,7 @@
             <h3>Episodes</h3>
             
             <div class="episodes-grid">
-                <!-- Episode 1 -->
+                <!-- Episode 1 (Active) -->
                 <div class="episode-card" onclick="changeEpisode('https://archive.org/download/goblin.-s-01e-01.-korean.-hdtv-cm-movie-480-p/Goblin.S01e01.Korean.Hdtv-[Cinesubz.Com]-480P.mp4', 'Episode 1')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 1">
@@ -375,27 +375,27 @@
                     </div>
                 </div>
 
-                <!-- Episode 2 -->
-                <div class="episode-card" onclick="changeEpisode('ANUTH_EPISODE_ARCHIVE_LINK_2', 'Episode 2')">
+                <!-- Episode 2 (Coming Soon) -->
+                <div class="episode-card" onclick="changeEpisode('COMING_SOON', 'Episode 2')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 2">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
                     </div>
                     <div class="ep-info">
                         <h4>Episode 2</h4>
-                        <p>Duration: ~60m</p>
+                        <p>Coming Soon</p>
                     </div>
                 </div>
 
-                <!-- Episode 3 -->
-                <div class="episode-card" onclick="changeEpisode('ANUTH_EPISODE_ARCHIVE_LINK_3', 'Episode 3')">
+                <!-- Episode 3 (Coming Soon) -->
+                <div class="episode-card" onclick="changeEpisode('COMING_SOON', 'Episode 3')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 3">
                         <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
                     </div>
                     <div class="ep-info">
                         <h4>Episode 3</h4>
-                        <p>Duration: ~60m</p>
+                        <p>Coming Soon</p>
                     </div>
                 </div>
             </div>
@@ -409,6 +409,11 @@
 
     <script>
         function changeEpisode(videoUrl, epName) {
+            if (videoUrl === 'COMING_SOON') {
+                alert(epName + " එක තවම අප්‌ලෝඩ් කරලා නැහැ. ළඟදීීම බලාගන්න පුළුවන් වෙයි! (Coming Soon)");
+                return;
+            }
+
             const player = document.getElementById('moviePlayer');
             player.src = videoUrl;
             player.load();
