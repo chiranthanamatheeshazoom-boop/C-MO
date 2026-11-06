@@ -545,11 +545,16 @@
                         replyHtml = `<div class="chat-reply-quote"><strong>${escapeHtml(data.replyToName)}:</strong> ${escapeHtml(data.replyToText)}</div>`;
                     }
 
+                    // Admin හෝ අදාළ පණිවිඩයේ අයිතිකරු සඳහා Edit/Delete පාලනයන්
                     let ownerActionsHtml = "";
                     if (currentUser && currentUser.uid === data.uid) {
                         let safeText = data.message.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        ownerActionsHtml = `
+                        ownerActionsHtml += `
                             <button class="action-btn" onclick="setEditMessage('${data.id}', '${safeText}')">Edit</button>
+                            <button class="action-btn delete-btn" onclick="deleteMessage('${data.id}')">Delete</button>
+                        `;
+                    } else if (currentUser && currentUser.uid === ADMIN_UID) {
+                        ownerActionsHtml += `
                             <button class="action-btn delete-btn" onclick="deleteMessage('${data.id}')">Delete</button>
                         `;
                     }
