@@ -111,6 +111,14 @@
         <div class="chat-section">
             <h3><i class="fa-solid fa-comments"></i> Stream Chat</h3>
             
+            <!-- Pinned Message Banner -->
+            <div id="pinnedMessageBanner" class="pinned-message-banner">
+                <div class="pinned-content">
+                    <span><i class="fa-solid fa-thumbtack"></i> Pinned Message</span>
+                    <p id="pinnedTextDisplay">No message pinned</p>
+                </div>
+            </div>
+
             <!-- Messages Container -->
             <div class="chat-box" id="chatMessagesContainer">
                 <!-- මැසේජ් ලෝඩ් වන තැන -->
@@ -201,6 +209,8 @@
 
         const auth = firebase.auth();
         const db = firebase.firestore();
+
+        const ADMIN_UID = "YOUR_ADMIN_UID_HERE"; // මෙතැනට ඔයාගේ Admin UID එක දාන්න
 
         let isSignUpMode = false;
         let replyingToData = null;
@@ -462,6 +472,51 @@
             }
         }
 
+        function pinMessage(docId, messageText, senderName) {
+            db.collection("goblin_settings").doc("chat_settings").set({
+                pinnedId: docId,
+                pinnedText: messageText,
+                pinnedBy: senderName
+            }, { merge: true })
+            .then(() => {
+                alert("මැසේජ් එක සාර්ථකව Pin කරන ලදී!");
+            })
+            .catch((error) => {
+                alert("Pin කිරීමට නොහැකි විය: " + error.message);
+            });
+        }
+
+        // Realtime Pinned message listener
+        db.collection("goblin_settings").doc("chat_settings").onSnapshot((doc) => {
+            let banner = document.getElementById('pinnedMessageBanner');
+            if (doc.exists && doc.data().pinnedText) {
+                let data = doc.data();
+                document.getElementById('pinnedTextDisplay').innerText = `${data.pinnedBy}: ${data.pinnedText}`;
+                banner.style.display = "flex";
+            } else {
+                banner.style.display = "none";
+            }
+        });
+
+        // YouTube style time ago function
+        function timeAgo(timestamp) {
+            if (!timestamp) return "just now";
+            let now = new Date();
+            let seconds = Math.floor((now - timestamp.toDate()) / 1000);
+
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            return "just now";
+        }
+
         function loadChatMessages() {
             const container = document.getElementById('chatMessagesContainer');
             
@@ -499,16 +554,28 @@
                         `;
                     }
 
+                    let pinActionHtml = "";
+                    if (currentUser && currentUser.uid === ADMIN_UID) {
+                        let safeText = data.message.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        let safeName = data.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        pinActionHtml = `<button class="action-btn pin-btn" onclick="pinMessage('${data.id}', '${safeText}', '${safeName}')">Pin</button>`;
+                    }
+
                     let editedLabel = data.edited ? ' <span style="font-size:10px; color:#777;">(edited)</span>' : '';
+                    let timeAgoText = timeAgo(data.timestamp);
 
                     msgElement.innerHTML = `
                         <img src="${data.photo}" alt="User" class="chat-user-img">
                         <div class="chat-content-bubble">
-                            <span class="chat-username">${escapeHtml(data.name)}</span>
+                            <div style="display: flex; align-items: baseline; gap: 8px;">
+                                <span class="chat-username">${escapeHtml(data.name)}</span>
+                                <span style="font-size: 11px; color: #777;">${timeAgoText}</span>
+                            </div>
                             ${replyHtml}
                             <span class="chat-text">${escapeHtml(data.message)}${editedLabel}</span>
                             <div class="chat-actions">
                                 <button class="action-btn" onclick="setReplyTo('${escapeHtml(data.name).replace(/'/g, "\\'")}', '${escapeHtml(data.message).replace(/'/g, "\\'")}')">Reply</button>
+                                ${pinActionHtml}
                                 ${ownerActionsHtml}
                             </div>
                         </div>
