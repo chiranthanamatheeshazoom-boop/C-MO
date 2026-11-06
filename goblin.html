@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goblin - CM Movie World</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase App, Auth, and Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -20,7 +26,7 @@
             flex-direction: column;
         }
 
-        /* Navigation Bar */
+        /* Navigation Bar (No login buttons on top right) */
         header {
             display: flex;
             justify-content: space-between;
@@ -152,7 +158,6 @@
             background-color: #000;
         }
         
-        /* ෆෝන් එකේ ෆුල් ස්ක්‍රීන් දාපුවාම වීඩියෝ එක කපී යාම වැළැක්වීමට සහ ස්ක්‍රීන් එකට මැච් වීමට */
         video:fullscreen {
             width: 100% !important;
             height: 100% !important;
@@ -195,7 +200,119 @@
             border-color: #e50914;
         }
 
-        /* Episodes Section (Netflix Grid Style) */
+        /* --- Login Modal Box Styling --- */
+        .login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-modal-content {
+            background: #1f1f1f;
+            padding: 35px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            position: relative;
+        }
+        .login-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: #aaa;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .login-close-btn:hover {
+            color: #fff;
+        }
+        .login-modal-content h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #e50914;
+        }
+        .google-login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #fff;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+        .google-login-btn:hover {
+            background: #f1f1f1;
+        }
+        .divider {
+            text-align: center;
+            border-bottom: 1px solid #333;
+            line-height: 0.1em;
+            margin: 20px 0;
+        }
+        .divider span {
+            background: #1f1f1f;
+            padding: 0 10px;
+            color: #777;
+            font-size: 13px;
+        }
+        .login-input-group {
+            margin-bottom: 15px;
+        }
+        .login-input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .login-input-group input {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .login-input-group input:focus {
+            border-color: #e50914;
+        }
+        .login-submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #e50914;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 5px;
+        }
+        .login-submit-btn:hover {
+            background: #b20710;
+        }
+
+        /* Episodes Section */
         .episodes-section h3 {
             font-size: 22px;
             margin-bottom: 20px;
@@ -281,7 +398,6 @@
             border-top: 1px solid #222;
         }
 
-        /* --- Mobile Responsive Media Queries --- */
         @media (max-width: 768px) {
             header {
                 padding: 15px 20px;
@@ -323,7 +439,7 @@
 </head>
 <body>
 
-    <!-- Navigation Bar -->
+    <!-- Navigation Bar (Clean - No login button) -->
     <header>
         <a href="index.html" class="logo">CM <span>Movie World</span></a>
         <nav>
@@ -376,7 +492,7 @@
             <h3>Episodes</h3>
             
             <div class="episodes-grid">
-                <!-- Episode 1 (Active) -->
+                <!-- Episode 1 -->
                 <div class="episode-card" onclick="changeEpisode('https://archive.org/download/goblin.-s-01e-01.-korean.-hdtv-cm-movie-480-p/Goblin.S01e01.Korean.Hdtv-[Cinesubz.Com]-480P.mp4', 'Episode 1')">
                     <div class="ep-thumb">
                         <img src="goblin 1.jpg" alt="Episode 1">
@@ -415,13 +531,170 @@
         </div>
     </div>
 
+    <!-- Login Modal Box (Pops up only when trying to play without login) -->
+    <div id="loginModalBox" class="login-modal">
+        <div class="login-modal-content">
+            <button class="login-close-btn" onclick="closeLoginModal()">&times;</button>
+            <h2 id="modalTitle">Sign In</h2>
+            
+            <!-- Google Sign-In Button -->
+            <button type="button" class="google-login-btn" onclick="signInWithGoogle()">
+                <i class="fa-brands fa-google" style="color: #ea4335;"></i> Continue with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
+
+            <!-- Email/Password Login Form -->
+            <form id="loginForm" onsubmit="handleEmailAuth(event)">
+                <div class="login-input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="login-input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="login-submit-btn">Login</button>
+            </form>
+
+            <!-- Switch between Login and Sign Up -->
+            <p class="auth-switch-text" style="text-align: center; margin-top: 15px; font-size: 14px; color: #aaa;">
+                <span id="switchText">Don't have an account?</span> 
+                <a href="#" id="switchLink" onclick="toggleAuthMode(event)" style="color: #e50914; text-decoration: none; font-weight: bold;">Sign Up</a>
+            </p>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <p>&copy; 2026 CM Movie World. All Rights Reserved.</p>
     </footer>
 
+    <!-- JavaScript for Firebase, Firestore, and Authentication -->
     <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
+            authDomain: "cm-movie-world.firebaseapp.com",
+            projectId: "cm-movie-world",
+            storageBucket: "cm-movie-world.firebasestorage.app",
+            messagingSenderId: "9868705427",
+            appId: "1:9868705427:web:80d7b0a78496562bfe9766",
+            measurementId: "G-52QRFKZRBY"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let isSignUpMode = false;
+
+        // Open & Close Modal
+        function openLoginModal() {
+            document.getElementById('loginModalBox').style.display = "flex";
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModalBox').style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('loginModalBox');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function toggleAuthMode(event) {
+            event.preventDefault();
+            isSignUpMode = !isSignUpMode;
+            let modalTitle = document.getElementById('modalTitle');
+            let authSubmitBtn = document.getElementById('authSubmitBtn');
+            let switchText = document.getElementById('switchText');
+            let switchLink = document.getElementById('switchLink');
+
+            if (isSignUpMode) {
+                modalTitle.innerText = "Create Account";
+                authSubmitBtn.innerText = "Sign Up";
+                switchText.innerText = "Already have an account?";
+                switchLink.innerText = "Sign In";
+            } else {
+                modalTitle.innerText = "Sign In";
+                authSubmitBtn.innerText = "Login";
+                switchText.innerText = "Don't have an account?";
+                switchLink.innerText = "Sign Up";
+            }
+        }
+
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+            .then((result) => {
+                let user = result.user;
+                db.collection("users").doc(user.uid).set({
+                    name: user.displayName,
+                    email: user.email,
+                    photo: user.photoURL,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                alert("Welcome, " + user.displayName + "!");
+                closeLoginModal();
+            })
+            .catch((error) => {
+                console.error("Google Login Error: ", error.message);
+                alert("Google Login failed: " + error.message);
+            });
+        }
+
+        function handleEmailAuth(event) {
+            event.preventDefault();
+            let email = document.getElementById('loginEmail').value.trim();
+            let password = document.getElementById('loginPassword').value;
+
+            if (isSignUpMode) {
+                auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    let user = userCredential.user;
+                    let defaultPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+
+                    db.collection("users").doc(user.uid).set({
+                        name: email.split('@')[0],
+                        email: email,
+                        photo: defaultPhoto,
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    alert("Account created successfully!");
+                    closeLoginModal();
+                })
+                .catch((error) => {
+                    alert("Sign Up Failed: " + error.message);
+                });
+            } else {
+                auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert("Login Successful!");
+                    closeLoginModal();
+                })
+                .catch((error) => {
+                    alert("Login Failed: " + error.message);
+                });
+            }
+        }
+
+        // Episode change check - Pops login modal if not signed in
         function changeEpisode(videoUrl, epName) {
+            const user = auth.currentUser;
+            
+            if (!user) {
+                openLoginModal();
+                return;
+            }
+
             if (videoUrl === 'COMING_SOON') {
                 alert(epName + " එක තවම අප්‌ලෝඩ් කරලා නැහැ. ළඟදීීම බලාගන්න පුළුවන් වෙයි! (Coming Soon)");
                 return;
@@ -435,6 +708,16 @@
             
             document.getElementById('playerBox').scrollIntoView({ behavior: 'smooth' });
         }
+
+        // Intercept play button press if user is not signed in
+        document.getElementById('moviePlayer').addEventListener('play', function(e) {
+            const user = auth.currentUser;
+            if (!user) {
+                e.preventDefault();
+                this.pause();
+                openLoginModal();
+            }
+        });
 
         function toggleFullscreen() {
             const playerBox = document.getElementById('playerBox');
