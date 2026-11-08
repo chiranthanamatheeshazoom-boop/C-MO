@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CM Movie World - Watch</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Link External CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase App, Auth, and Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <header>
+        <a href="index.html" class="logo">CM <span>Movie World</span></a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="dramas.html">Dramas</a>
+            <a href="#">Movies</a>
+            <a href="#">Genres</a>
+        </nav>
+    </header>
+
+    <!-- Movie Banner / Header -->
+    <div class="movie-banner" id="bannerSection" style="background-size: cover; background-position: center;">
+        <div class="banner-poster">
+            <img id="dramaPosterImg" src="" alt="Drama Poster">
+        </div>
+        <div class="banner-info">
+            <h1 id="dramaTitleText">Loading...</h1>
+            <div class="meta-tags" id="dramaMetaTags">
+                <!-- Firebase එකෙන් දත්ත වැටේ -->
+            </div>
+            <p id="dramaDescText">Loading description...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+        
+        <!-- Video Player Section -->
+        <div class="player-section">
+            <div class="player-container" id="playerBox">
+                <video id="moviePlayer" controls controlsList="nodownload" oncontextmenu="return false;" preload="auto" playsinline>
+                    <source src="" type="video/mp4" id="videoSourceTag">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            
+            <div class="player-controls-bar">
+                <div class="current-ep-title" id="epTitleDisplay">Now Playing: Select an Episode</div>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()">
+                    <i class="fa-solid fa-expand"></i> Full Screen
+                </button>
+            </div>
+        </div>
+
+        <!-- Stream Chat Section -->
+        <div class="chat-section">
+            <h3><i class="fa-solid fa-comments"></i> Stream Chat</h3>
+            
+            <!-- Pinned Message Banner -->
+            <div id="pinnedMessageBanner" class="pinned-message-banner" style="display:none;">
+                <div class="pinned-content">
+                    <span><i class="fa-solid fa-thumbtack"></i> Pinned Message</span>
+                    <p id="pinnedTextDisplay">No message pinned</p>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div class="chat-box" id="chatMessagesContainer">
+                <!-- මැසේජ් ලෝඩ් වන තැන -->
+            </div>
+
+            <!-- Active Reply / Edit Banner -->
+            <div id="activeBanner" class="active-banner" style="display:none;">
+                <span id="bannerText">Action text</span>
+                <button type="button" class="cancel-action" onclick="cancelActiveAction()">✕</button>
+            </div>
+
+            <!-- Input Form & Emoji Picker Wrapper -->
+            <div class="chat-input-wrapper">
+                <!-- Emoji Selection Panel -->
+                <div class="emoji-picker" id="emojiPickerPanel" style="display:none;">
+                    <span onclick="insertEmoji('😊')">😊</span>
+                    <span onclick="insertEmoji('😂')">😂</span>
+                    <span onclick="insertEmoji('❤️')">❤️</span>
+                    <span onclick="insertEmoji('👍')">👍</span>
+                    <span onclick="insertEmoji('🔥')">🔥</span>
+                    <span onclick="insertEmoji('👏')">👏</span>
+                    <span onclick="insertEmoji('😍')">😍</span>
+                    <span onclick="insertEmoji('😎')">😎</span>
+                    <span onclick="insertEmoji('🎉')">🎉</span>
+                    <span onclick="insertEmoji('✨')">✨</span>
+                </div>
+
+                <form class="chat-input-area" onsubmit="handleChatSubmit(event)">
+                    <button type="button" class="emoji-toggle-btn" onclick="toggleEmojiPicker()"><i class="fa-regular fa-face-smile"></i></button>
+                    <input type="text" id="chatInputText" placeholder="Chat as signed-in user..." required>
+                    <button type="submit" id="chatSubmitBtn" class="chat-send-btn">Send</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Episodes Grid Section -->
+        <div class="episodes-section" style="margin-top: 40px;">
+            <h3>Episodes</h3>
+            
+            <div class="episodes-grid" id="episodesGridContainer">
+                <!-- Firebase එකෙන් Episodes Auto ජනනය වේ -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Login Modal Box -->
+    <div id="loginModalBox" class="login-modal" style="display:none;">
+        <div class="login-modal-content">
+            <button class="login-close-btn" onclick="closeLoginModal()">&times;</button>
+            <h2 id="modalTitle">Sign In</h2>
+            
+            <button type="button" class="google-login-btn" onclick="signInWithGoogle()">
+                <i class="fa-brands fa-google" style="color: #ea4335;"></i> Continue with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
+
+            <form id="loginForm" onsubmit="handleEmailAuth(event)">
+                <div class="login-input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="login-input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="login-submit-btn">Login</button>
+            </form>
+
+            <p class="auth-switch-text" style="text-align: center; margin-top: 15px; font-size: 14px; color: #aaa;">
+                <span id="switchText">Don't have an account?</span> 
+                <a href="#" id="switchLink" onclick="toggleAuthMode(event)" style="color: #e50914; text-decoration: none; font-weight: bold;">Sign Up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CM Movie World. All Rights Reserved.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
+            authDomain: "cm-movie-world.firebaseapp.com",
+            projectId: "cm-movie-world",
+            storageBucket: "cm-movie-world.firebasestorage.app",
+            messagingSenderId: "9868705427",
+            appId: "1:9868705427:web:80d7b0a78496562bfe9766",
+            measurementId: "G-52QRFKZRBY"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const ADMIN_UID = "l7YbcsX71dheETohs1YSnzdRkry2";
+
+        // URL එකෙන් Drama එක ලබා ගැනීම (උදා: goblin.html?drama=goblin හෝ ?id=vincenzo)
+        const urlParams = new URLSearchParams(window.location.search);
+        const dramaKey = urlParams.get('drama') || urlParams.get('id') || 'goblin'; 
+
+        const CHAT_COLLECTION = dramaKey + "_chat";
+        const SETTINGS_DOC = dramaKey + "_settings";
+
+        // 🎬 Firebase එකෙන් ඩ්‍රාමා විස්තර සහ Episodes ලෝඩ් කරගැනීම
+        function loadDramaDetails() {
+            // 1. ඩ්‍රාමා ප්‍රධාන විස්තර ලබා ගැනීම
+            db.collection("dramas").doc(dramaKey).get().then((doc) => {
+                if (doc.exists) {
+                    let drama = doc.data();
+                    document.title = drama.title + " - CM Movie World";
+                    document.getElementById('dramaTitleText').innerText = drama.title;
+                    document.getElementById('dramaDescText').innerText = drama.description;
+                    document.getElementById('dramaPosterImg').src = drama.poster;
+                    
+                    // Banner background එක සැකසීම
+                    document.getElementById('bannerSection').style.background = `linear-gradient(to top, #0f0f0f 5%, rgba(15,15,15,0.6) 50%, rgba(15,15,15,0.9)), url('${drama.poster}')`;
+                    document.getElementById('bannerSection').style.backgroundSize = "cover";
+                    document.getElementById('bannerSection').style.backgroundPosition = "center";
+
+                    // Meta tags පිරවීම
+                    const metaContainer = document.getElementById('dramaMetaTags');
+                    metaContainer.innerHTML = `
+                        <span>${drama.year || '2026'}</span>
+                        <span>${drama.episodesCount || '16 Episodes'}</span>
+                        <span>${drama.genres}</span>
+                        <span>${drama.rating}</span>
+                    `;
+                } else {
+                    document.getElementById('dramaTitleText').innerText = "Drama Not Found";
+                    document.getElementById('dramaDescText').innerText = "මෙම ඩ්‍රාමා එක ඩේටාබේස් එකේ හමු නොවීය.";
+                }
+            });
+
+            // 2. අදාළ ඩ්‍රාමා එකේ Episodes සහ Complete/Coming Soon ලොජික් එක ලෝඩ් කිරීම
+            db.collection("dramas").doc(dramaKey).collection("episodes").orderBy("episodeNumber").get().then((querySnapshot) => {
+                const gridContainer = document.getElementById('episodesGridContainer');
+                gridContainer.innerHTML = "";
+
+                if (querySnapshot.empty) {
+                    gridContainer.innerHTML = "<p style='color: #888;'>No episodes added yet. Please add via Admin Panel.</p>";
+                    document.getElementById('epTitleDisplay').innerText = "Now Playing: Coming Soon";
+                    return;
+                }
+
+                let firstVideoUrl = "";
+                let firstEpName = "";
+
+                querySnapshot.forEach((epDoc) => {
+                    let ep = epDoc.data();
+                    let epNum = ep.episodeNumber;
+                    let videoUrl = ep.videoUrl;
+                    let epTitle = "Episode " + epNum;
+
+                    let card = document.createElement('div');
+                    card.className = 'episode-card';
+                    
+                    let clickAction = "";
+                    let statusBadge = "";
+
+                    if (videoUrl && videoUrl.trim() !== "") {
+                        clickAction = `changeEpisode('${videoUrl}', '${epTitle}')`;
+                        statusBadge = `<p style="color: #28a745; font-weight: 600;">Complete 🎬</p>`;
+                        
+                        // මුල්ම ලින්ක් එක තියෙන එපිසෝඩ් එක ඩිෆෝල්ට් ප්ලේයර් එකට සෙට් කිරීමට
+                        if (!firstVideoUrl) {
+                            firstVideoUrl = videoUrl;
+                            firstEpName = epTitle;
+                        }
+                    } else {
+                        clickAction = `changeEpisode('COMING_SOON', '${epTitle}')`;
+                        statusBadge = `<p style="color: #ff9900; font-weight: 600;">Coming Soon ⏳</p>`;
+                    }
+
+                    card.setAttribute('onclick', clickAction);
+                    card.innerHTML = `
+                        <div class="ep-thumb">
+                            <img class="ep-card-img" src="" alt="${epTitle}" style="width:100%; height:100%; object-fit:cover;">
+                            <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                        <div class="ep-info">
+                            <h4>${epTitle}</h4>
+                            ${statusBadge}
+                        </div>
+                    `;
+                    gridContainer.appendChild(card);
+                });
+
+                // පෝස්ටර් ඉමේජ් එක ඊළඟට කාඩ් වලට ලෝඩ් කිරීම
+                db.collection("dramas").doc(dramaKey).get().then((doc) => {
+                    if(doc.exists) {
+                        let posterUrl = doc.data().poster;
+                        document.querySelectorAll('.ep-card-img').forEach(img => img.src = posterUrl);
+                    }
+                });
+
+                // පළමු එපිසෝඩ් එක ප්ලේයර් එකට ලෝඩ් කිරීම
+                if (firstVideoUrl) {
+                    document.getElementById('moviePlayer').src = firstVideoUrl;
+                    document.getElementById('epTitleDisplay').innerText = "Now Playing: " + firstEpName;
+                } else {
+                    document.getElementById('epTitleDisplay').innerText = "Now Playing: Coming Soon";
+                }
+            });
+        }
+
+        let isSignUpMode = false;
+        let replyingToData = null;
+        let editingDocId = null;
+
+        function openLoginModal() {
+            document.getElementById('loginModalBox').style.display = "flex";
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModalBox').style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('loginModalBox');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function toggleAuthMode(event) {
+            event.preventDefault();
+            isSignUpMode = !isSignUpMode;
+            let modalTitle = document.getElementById('modalTitle');
+            let authSubmitBtn = document.getElementById('authSubmitBtn');
+            let switchText = document.getElementById('switchText');
+            let switchLink = document.getElementById('switchLink');
+
+            if (isSignUpMode) {
+                modalTitle.innerText = "Create Account";
+                authSubmitBtn.innerText = "Sign Up";
+                switchText.innerText = "Already have an account?";
+                switchLink.innerText = "Sign In";
+            } else {
+                modalTitle.innerText = "Sign In";
+                authSubmitBtn.innerText = "Login";
+                switchText.innerText = "Don't have an account?";
+                switchLink.innerText = "Sign Up";
+            }
+        }
+
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+            .then((result) => {
+                let user = result.user;
+                db.collection("users").doc(user.uid).set({
+                    name: user.displayName,
+                    email: user.email,
+                    photo: user.photoURL,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                alert("Welcome, " + user.displayName + "!");
+                closeLoginModal();
+            })
+            .catch((error) => alert("Google Login failed: " + error.message));
+        }
+
+        function handleEmailAuth(event) {
+            event.preventDefault();
+            let email = document.getElementById('loginEmail').value.trim();
+            let password = document.getElementById('loginPassword').value;
+
+            if (isSignUpMode) {
+                auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    let user = userCredential.user;
+                    db.collection("users").doc(user.uid).set({
+                        name: email.split('@')[0],
+                        email: email,
+                        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert("Account created successfully!");
+                    closeLoginModal();
+                })
+                .catch((error) => alert("Sign Up Failed: " + error.message));
+            } else {
+                auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Login Successful!");
+                    closeLoginModal();
+                })
+                .catch((error) => alert("Login Failed: " + error.message));
+            }
+        }
+
+        function changeEpisode(videoUrl, epName) {
+            const user = auth.currentUser;
+            if (!user) {
+                openLoginModal();
+                return;
+            }
+
+            if (videoUrl === 'COMING_SOON' || !videoUrl) {
+                alert("Episode not uploaded yet, coming soon!");
+                return;
+            }
+
+            const player = document.getElementById('moviePlayer');
+            player.src = videoUrl;
+            player.load();
+            player.play();
+            document.getElementById('epTitleDisplay').innerText = "Now Playing: " + epName;
+            document.getElementById('playerBox').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('moviePlayer').addEventListener('play', function(e) {
+            const user = auth.currentUser;
+            if (!user) {
+                e.preventDefault();
+                this.pause();
+                openLoginModal();
+            }
+        });
+
+        function toggleFullscreen() {
+            const playerBox = document.getElementById('playerBox');
+            const player = document.getElementById('moviePlayer');
+            if (player.requestFullscreen) {
+                player.requestFullscreen();
+            } else if (!document.fullscreenElement) {
+                playerBox.requestFullscreen().catch(err => alert(`Fullscreen Error: ${err.message}`));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function toggleEmojiPicker() {
+            let picker = document.getElementById('emojiPickerPanel');
+            picker.style.display = (picker.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function insertEmoji(emoji) {
+            let inputField = document.getElementById('chatInputText');
+            inputField.value += emoji;
+            inputField.focus();
+            document.getElementById('emojiPickerPanel').style.display = 'none';
+        }
+
+        function setReplyTo(username, message) {
+            editingDocId = null;
+            replyingToData = { name: username, text: message };
+            let banner = document.getElementById('activeBanner');
+            document.getElementById('bannerText').innerText = `Replying to ${username}: "${message.substring(0, 30)}..."`;
+            banner.style.display = "flex";
+            document.getElementById('chatSubmitBtn').innerText = "Send";
+            document.getElementById('chatInputText').value = "";
+            document.getElementById('chatInputText').focus();
+        }
+
+        function setEditMessage(docId, currentText) {
+            replyingToData = null;
+            editingDocId = docId;
+            let banner = document.getElementById('activeBanner');
+            document.getElementById('bannerText').innerText = `Editing message: "${currentText.substring(0, 30)}..."`;
+            banner.style.display = "flex";
+            document.getElementById('chatSubmitBtn').innerText = "Update";
+            let inputField = document.getElementById('chatInputText');
+            inputField.value = currentText;
+            inputField.focus();
+        }
+
+        function cancelActiveAction() {
+            replyingToData = null;
+            editingDocId = null;
+            document.getElementById('activeBanner').style.display = "none";
+            document.getElementById('chatSubmitBtn').innerText = "Send";
+            document.getElementById('chatInputText').value = "";
+        }
+
+        function handleChatSubmit(event) {
+            event.preventDefault();
+            const user = auth.currentUser;
+            if (!user) {
+                openLoginModal();
+                return;
+            }
+
+            let inputField = document.getElementById('chatInputText');
+            let messageText = inputField.value.trim();
+            if (messageText === "") return;
+
+            if (editingDocId) {
+                db.collection(CHAT_COLLECTION).doc(editingDocId).update({
+                    message: messageText,
+                    edited: true
+                }).then(() => {
+                    inputField.value = "";
+                    cancelActiveAction();
+                });
+                return;
+            }
+
+            let chatData = {
+                uid: user.uid,
+                name: user.displayName || user.email.split('@')[0],
+                photo: user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+                message: messageText,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (replyingToData) {
+                chatData.replyToName = replyingToData.name;
+                chatData.replyToText = replyingToData.text;
+            }
+
+            db.collection(CHAT_COLLECTION).add(chatData).then(() => {
+                inputField.value = "";
+                cancelActiveAction();
+            });
+        }
+
+        function deleteMessage(docId) {
+            if (confirm("ඔබට මෙම මැසේජ් එක මැකීමට අවශ්‍ය බව විශ්වාසද?")) {
+                db.collection(CHAT_COLLECTION).doc(docId).delete();
+            }
+        }
+
+        function pinMessage(docId, messageText, senderName) {
+            db.collection("settings").doc(SETTINGS_DOC).set({
+                pinnedId: docId,
+                pinnedText: messageText,
+                pinnedBy: senderName
+            }, { merge: true });
+        }
+
+        db.collection("settings").doc(SETTINGS_DOC).onSnapshot((doc) => {
+            let banner = document.getElementById('pinnedMessageBanner');
+            if (doc.exists && doc.data().pinnedText) {
+                let data = doc.data();
+                document.getElementById('pinnedTextDisplay').innerText = `${data.pinnedBy}: ${data.pinnedText}`;
+                banner.style.display = "flex";
+            } else {
+                banner.style.display = "none";
+            }
+        });
+
+        function timeAgo(timestamp) {
+            if (!timestamp) return "just now";
+            let seconds = Math.floor((new Date() - timestamp.toDate()) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            return "just now";
+        }
+
+        function loadChatMessages() {
+            const container = document.getElementById('chatMessagesContainer');
+            db.collection(CHAT_COLLECTION).orderBy("timestamp", "desc").limit(50).onSnapshot((snapshot) => {
+                let messages = [];
+                snapshot.forEach((doc) => {
+                    let data = doc.data();
+                    data.id = doc.id;
+                    messages.push(data);
+                });
+                messages.reverse();
+
+                container.innerHTML = "";
+                const currentUser = auth.currentUser;
+
+                messages.forEach((data) => {
+                    let msgElement = document.createElement('div');
+                    msgElement.className = 'chat-message';
+                    
+                    let replyHtml = data.replyToName ? `<div class="chat-reply-quote"><strong>${escapeHtml(data.replyToName)}:</strong> ${escapeHtml(data.replyToText)}</div>` : "";
+                    let ownerActionsHtml = "";
+                    
+                    if (currentUser && currentUser.uid === data.uid) {
+                        let safeText = data.message.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        ownerActionsHtml += `<button class="action-btn" onclick="setEditMessage('${data.id}', '${safeText}')">Edit</button><button class="action-btn delete-btn" onclick="deleteMessage('${data.id}')">Delete</button>`;
+                    } else if (currentUser && currentUser.uid === ADMIN_UID) {
+                        ownerActionsHtml += `<button class="action-btn delete-btn" onclick="deleteMessage('${data.id}')">Delete</button>`;
+                    }
+
+                    let pinActionHtml = (currentUser && currentUser.uid === ADMIN_UID) ? `<button class="action-btn pin-btn" onclick="pinMessage('${data.id}', '${escapeHtml(data.message).replace(/'/g, "\\'")}', '${escapeHtml(data.name).replace(/'/g, "\\'")}')">Pin</button>` : "";
+                    let editedLabel = data.edited ? ' <span style="font-size:10px; color:#777;">(edited)</span>' : '';
+
+                    msgElement.innerHTML = `
+                        <img src="${data.photo}" alt="User" class="chat-user-img">
+                        <div class="chat-content-bubble">
+                            <div style="display: flex; align-items: baseline; gap: 8px;">
+                                <span class="chat-username">${escapeHtml(data.name)}</span>
+                                <span style="font-size: 11px; color: #777;">${timeAgo(data.timestamp)}</span>
+                            </div>
+                            ${replyHtml}
+                            <span class="chat-text">${escapeHtml(data.message)}${editedLabel}</span>
+                            <div class="chat-actions">
+                                <button class="action-btn" onclick="setReplyTo('${escapeHtml(data.name).replace(/'/g, "\\'")}', '${escapeHtml(data.message).replace(/'/g, "\\'")}')">Reply</button>
+                                ${pinActionHtml}
+                                ${ownerActionsHtml}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(msgElement);
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        function escapeHtml(text) {
+            let map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDramaDetails(); 
+            loadChatMessages(); 
+        });
+    </script>
+</body>
+</html>

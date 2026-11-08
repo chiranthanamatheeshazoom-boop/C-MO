@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - CM Movie World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body { 
+            background-color: #0f0f0f; 
+            color: #fff; 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 20px; 
+            margin: 0;
+        }
+        
+        .admin-container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); 
+        }
+        
+        h2 { 
+            color: #e50914; 
+            margin-bottom: 20px; 
+            text-align: center; 
+        }
+        
+        .section-box { 
+            background: #222; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            border: 1px solid #444; 
+        }
+        
+        .section-box h3 { 
+            margin-top: 0; 
+            color: #ff9900; 
+            font-size: 18px; 
+            margin-bottom: 15px; 
+        }
+        
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-size: 14px; 
+            color: #bbb; 
+        }
+        
+        input, textarea, select { 
+            width: 100%; 
+            padding: 12px; 
+            background: #2a2a2a; 
+            border: 1px solid #444; 
+            color: #fff; 
+            border-radius: 6px; 
+            outline: none; 
+            font-size: 14px;
+            display: block;
+        }
+        
+        input:focus, textarea:focus, select:focus { 
+            border-color: #e50914; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background: #e50914; 
+            color: #fff; 
+            border: none; 
+            font-weight: bold; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin-top: 10px; 
+            transition: 0.3s; 
+        }
+        
+        button:hover { 
+            background: #f40612; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <h2><i class="fa-solid fa-cloud-arrow-up"></i> CM Movie World Admin Panel</h2>
+        
+        <!-- 1. අලුත් ඩ්‍රාමා එකක් ඇඩ් කිරීම -->
+        <div class="section-box">
+            <h3><i class="fa-solid fa-film"></i> 1. Add New Drama</h3>
+            <form onsubmit="addNewDrama(event)">
+                <div class="form-group">
+                    <label>Drama Key (English simple letters, e.g., goblin)</label>
+                    <input type="text" id="dramaKey" placeholder="goblin" required>
+                </div>
+                <div class="form-group">
+                    <label>Drama Title</label>
+                    <input type="text" id="dramaTitle" placeholder="Goblin" required>
+                </div>
+                <div class="form-group">
+                    <label>Poster Image Link (Archive.org or Image URL)</label>
+                    <input type="text" id="dramaPoster" placeholder="https://archive.org/download/.../poster.jpg" required>
+                </div>
+                <div class="form-group">
+                    <label>Genres (e.g., Action, Crime, Romance)</label>
+                    <input type="text" id="dramaGenres" placeholder="Fantasy, Romance" required>
+                </div>
+                <div class="form-group">
+                    <label>Total Episodes Count (e.g., 16 Episodes)</label>
+                    <input type="text" id="dramaEpisodesCount" placeholder="16 Episodes" required>
+                </div>
+                <div class="form-group">
+                    <label>Release Year (e.g., 2026)</label>
+                    <input type="text" id="dramaYear" placeholder="2026" required>
+                </div>
+                <div class="form-group">
+                    <label>Rating (e.g., ⭐ 9.3/10)</label>
+                    <input type="text" id="dramaRating" placeholder="⭐ 9.3/10" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="dramaDesc" rows="3" placeholder="Short description..." required></textarea>
+                </div>
+                <button type="submit">Save Drama to Database</button>
+            </form>
+        </div>
+
+        <!-- 2. ඩ්‍රාමා එකකට එපිසෝඩ් එකක් ඇඩ් කිරීම -->
+        <div class="section-box">
+            <h3><i class="fa-solid fa-play-circle"></i> 2. Add Episode to Drama</h3>
+            <form onsubmit="addEpisode(event)">
+                <div class="form-group">
+                    <label>Select Drama Key</label>
+                    <input type="text" id="epDramaKey" placeholder="goblin" required>
+                </div>
+                <div class="form-group">
+                    <label>Episode Number (e.g., 1, 2, 3...)</label>
+                    <input type="number" id="epNumber" placeholder="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Archive.org Direct Video Link (Optional)</label>
+                    <input type="text" id="epVideoUrl" placeholder="https://archive.org/download/.../ep1.mp4">
+                </div>
+                <button type="submit" style="background: #28a745;">Add Episode</button>
+            </form>
+        </div>
+
+        <!-- 3. එපිසෝඩ් ලින්ක් එක වෙනස් කිරීම (Edit / Update Episode) -->
+        <div class="section-box" style="border-color: #ff9900;">
+            <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 3. Update Existing Episode Link</h3>
+            <form onsubmit="updateEpisode(event)">
+                <div class="form-group">
+                    <label>Drama Key (e.g., goblin)</label>
+                    <input type="text" id="upDramaKey" placeholder="goblin" oninput="checkEpisodeStatus()" required>
+                </div>
+                <div class="form-group">
+                    <label>Episode Number to Update (e.g., 1, 2...)</label>
+                    <input type="number" id="upEpNumber" placeholder="1" oninput="checkEpisodeStatus()" required>
+                </div>
+                <div class="form-group">
+                    <label>Archive.org Video Link (Leave blank if coming soon)</label>
+                    <input type="text" id="upVideoUrl" placeholder="Enter link or leave blank">
+                </div>
+                <button type="submit" style="background: #ff9900; color: #000;">Update Episode Link</button>
+            </form>
+        </div>
+
+        <!-- 4. ඩ්‍රාමා එකක විස්තර වෙනස් කිරීම (Update Drama Details) -->
+        <div class="section-box" style="border-color: #ff9900;">
+            <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 4. Update Drama Details</h3>
+            <form onsubmit="updateDramaDetails(event)">
+                <div class="form-group">
+                    <label>Drama Key (e.g., goblin)</label>
+                    <input type="text" id="editDramaKey" placeholder="goblin" oninput="loadDramaDetailsForEdit()" required>
+                </div>
+                <div class="form-group">
+                    <label>Drama Title</label>
+                    <input type="text" id="editDramaTitle" placeholder="Goblin" required>
+                </div>
+                <div class="form-group">
+                    <label>Poster Image Link</label>
+                    <input type="text" id="editDramaPoster" placeholder="https://..." required>
+                </div>
+                <div class="form-group">
+                    <label>Genres</label>
+                    <input type="text" id="editDramaGenres" placeholder="Fantasy, Romance" required>
+                </div>
+                <div class="form-group">
+                    <label>Total Episodes Count</label>
+                    <input type="text" id="editDramaEpisodesCount" placeholder="16 Episodes" required>
+                </div>
+                <div class="form-group">
+                    <label>Release Year</label>
+                    <input type="text" id="editDramaYear" placeholder="2026" required>
+                </div>
+                <div class="form-group">
+                    <label>Rating</label>
+                    <input type="text" id="editDramaRating" placeholder="⭐ 9.3/10" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editDramaDesc" rows="3" placeholder="Description..." required></textarea>
+                </div>
+                <button type="submit" style="background: #ff9900; color: #000;">Update Drama Details</button>
+            </form>
+        </div>
+
+        <!-- 5. තනි එපිසෝඩ් එකක් මැකීම (Delete Single Episode) -->
+        <div class="section-box" style="border-color: #a00;">
+            <h3 style="color: #ff4444;"><i class="fa-solid fa-trash"></i> 5. Delete Single Episode</h3>
+            <form onsubmit="deleteSingleEpisode(event)">
+                <div class="form-group">
+                    <label>Drama Key (e.g., goblin)</label>
+                    <input type="text" id="delEpDramaKey" placeholder="goblin" required>
+                </div>
+                <div class="form-group">
+                    <label>Episode Number to Delete (e.g., 1, 2...)</label>
+                    <input type="number" id="delEpNumber" placeholder="1" required>
+                </div>
+                <button type="submit" style="background: #dc3545;">Delete Episode</button>
+            </form>
+        </div>
+
+        <!-- 6. ඩ්‍රාමා එක සම්පූර්ණයෙන්ම සහ චැට් එක සමඟ මැකීම (Delete Entire Drama & Chat) -->
+        <div class="section-box" style="border-color: #a00;">
+            <h3 style="color: #ff4444;"><i class="fa-solid fa-trash-can"></i> 6. Delete Entire Drama & Chat</h3>
+            <form onsubmit="deleteDrama(event)">
+                <div class="form-group">
+                    <label>Select Drama Key to Delete</label>
+                    <input type="text" id="delDramaKey" placeholder="goblin" required>
+                </div>
+                <button type="submit" style="background: #dc3545;">Delete Drama & Chat from Database</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
+            authDomain: "cm-movie-world.firebaseapp.com",
+            projectId: "cm-movie-world",
+            storageBucket: "cm-movie-world.firebasestorage.app",
+            messagingSenderId: "9868705427",
+            appId: "1:9868705427:web:80d7b0a78496562bfe9766",
+            measurementId: "G-52QRFKZRBY"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        // 1. ඩ්‍රාමා එකක් Save කිරීම
+        function addNewDrama(event) {
+            event.preventDefault();
+            let key = document.getElementById('dramaKey').value.trim().toLowerCase();
+            
+            db.collection("dramas").doc(key).set({
+                title: document.getElementById('dramaTitle').value.trim(),
+                poster: document.getElementById('dramaPoster').value.trim(),
+                genres: document.getElementById('dramaGenres').value.trim(),
+                episodesCount: document.getElementById('dramaEpisodesCount').value.trim(),
+                year: document.getElementById('dramaYear').value.trim(),
+                rating: document.getElementById('dramaRating').value.trim(),
+                description: document.getElementById('dramaDesc').value.trim()
+            })
+            .then(() => {
+                alert("අලුත් ඩ්‍රාමා එක සාර්ථකව Database එකට එකතු කළා! 🎉");
+                event.target.reset();
+            })
+            .catch((error) => alert("දෝෂයක් සිදු විය: " + error.message));
+        }
+
+        // 2. එපිසෝඩ් එකක් Add කිරීම
+        function addEpisode(event) {
+            event.preventDefault();
+            let dramaKey = document.getElementById('epDramaKey').value.trim().toLowerCase();
+            let epNum = document.getElementById('epNumber').value.trim();
+            let videoUrl = document.getElementById('epVideoUrl').value.trim();
+
+            db.collection("dramas").doc(dramaKey).collection("episodes").doc("ep_" + epNum).set({
+                episodeNumber: Number(epNum),
+                videoUrl: videoUrl
+            })
+            .then(() => {
+                alert("Episode " + epNum + " සාර්ථකව ඇඩ් කළා! 🎬");
+                event.target.reset();
+            })
+            .catch((error) => alert("දෝෂයක් සිදු විය: " + error.message));
+        }
+
+        // 3. එපිසෝඩ් ලින්ක් එක චෙක් කර ඔටෝ පෙන්වීම හෝ 'Not Uploaded' පෙන්වීම
+        function checkEpisodeStatus() {
+            let dramaKey = document.getElementById('upDramaKey').value.trim().toLowerCase();
+            let epNum = document.getElementById('upEpNumber').value.trim();
+            let urlInput = document.getElementById('upVideoUrl');
+
+            if (!dramaKey || !epNum) {
+                urlInput.value = "";
+                urlInput.placeholder = "Enter link or will show Not Uploaded";
+                return;
+            }
+
+            db.collection("dramas").doc(dramaKey).collection("episodes").doc("ep_" + epNum).get()
+            .then((doc) => {
+                if (doc.exists && doc.data().videoUrl) {
+                    urlInput.value = doc.data().videoUrl;
+                } else {
+                    urlInput.value = "";
+                    urlInput.placeholder = "Not Uploaded";
+                }
+            })
+            .catch((error) => {
+                console.error("Error checking episode: ", error);
+            });
+        }
+
+        // එපිසෝඩ් ලින්ක් එක Update කිරීම
+        function updateEpisode(event) {
+            event.preventDefault();
+            let dramaKey = document.getElementById('upDramaKey').value.trim().toLowerCase();
+            let epNum = document.getElementById('upEpNumber').value.trim();
+            let newUrl = document.getElementById('upVideoUrl').value.trim();
+
+            if (!dramaKey || !epNum) {
+                alert("කරුණාකර ඩ්‍රාමා කී එක සහ එපිසෝඩ් අංකය ලබා දෙන්න!");
+                return;
+            }
+
+            db.collection("dramas").doc(dramaKey).collection("episodes").doc("ep_" + epNum).set({
+                episodeNumber: Number(epNum),
+                videoUrl: newUrl
+            }, { merge: true })
+            .then(() => {
+                alert("Episode " + epNum + " ලින්ක් එක සාර්ථකව Update කළා! 🔄✨");
+            })
+            .catch((error) => alert("Update කිරීමේදී දෝෂයක්: " + error.message));
+        }
+
+        // 4. ඩ්‍රාමා Key එක දුන් විට පරණ විස්තර ටික ඔටෝ Fill වීම
+        function loadDramaDetailsForEdit() {
+            let key = document.getElementById('editDramaKey').value.trim().toLowerCase();
+            
+            if (!key) {
+                clearDramaEditForm();
+                return;
+            }
+
+            db.collection("dramas").doc(key).get().then((doc) => {
+                if (doc.exists) {
+                    let data = doc.data();
+                    document.getElementById('editDramaTitle').value = data.title || '';
+                    document.getElementById('editDramaPoster').value = data.poster || '';
+                    document.getElementById('editDramaGenres').value = data.genres || '';
+                    document.getElementById('editDramaEpisodesCount').value = data.episodesCount || '';
+                    document.getElementById('editDramaYear').value = data.year || '';
+                    document.getElementById('editDramaRating').value = data.rating || '';
+                    document.getElementById('editDramaDesc').value = data.description || '';
+                } else {
+                    clearDramaEditForm();
+                }
+            }).catch((error) => {
+                console.error("Error loading drama details: ", error);
+            });
+        }
+
+        function clearDramaEditForm() {
+            document.getElementById('editDramaTitle').value = '';
+            document.getElementById('editDramaPoster').value = '';
+            document.getElementById('editDramaGenres').value = '';
+            document.getElementById('editDramaEpisodesCount').value = '';
+            document.getElementById('editDramaYear').value = '';
+            document.getElementById('editDramaRating').value = '';
+            document.getElementById('editDramaDesc').value = '';
+        }
+
+        // ඩ්‍රාමා විස්තර Update කිරීම
+        function updateDramaDetails(event) {
+            event.preventDefault();
+            let key = document.getElementById('editDramaKey').value.trim().toLowerCase();
+            
+            let updateData = {
+                title: document.getElementById('editDramaTitle').value.trim(),
+                poster: document.getElementById('editDramaPoster').value.trim(),
+                genres: document.getElementById('editDramaGenres').value.trim(),
+                episodesCount: document.getElementById('editDramaEpisodesCount').value.trim(),
+                year: document.getElementById('editDramaYear').value.trim(),
+                rating: document.getElementById('editDramaRating').value.trim(),
+                description: document.getElementById('editDramaDesc').value.trim()
+            };
+
+            db.collection("dramas").doc(key).set(updateData, { merge: true })
+            .then(() => {
+                alert("ඩ්‍රාමා එකේ විස්තර සාර්ථකව Update කළා! 🔄✨");
+            })
+            .catch((error) => alert("දෝෂයක් සිදු විය: " + error.message));
+        }
+
+        // 5. තනි එපිසෝඩ් එකක් මැකීම (Delete Single Episode)
+        function deleteSingleEpisode(event) {
+            event.preventDefault();
+            let dramaKey = document.getElementById('delEpDramaKey').value.trim().toLowerCase();
+            let epNum = document.getElementById('delEpNumber').value.trim();
+
+            if (!confirm(`ඔබට විශ්වාසද "${dramaKey}" ඩ්‍රාමා එකේ Episode ${epNum} සම්පූර්ණයෙන්ම මකා දැමීමට අවශ්‍ය බව?`)) {
+                return;
+            }
+
+            db.collection("dramas").doc(dramaKey).collection("episodes").doc("ep_" + epNum).delete()
+            .then(() => {
+                alert("Episode " + epNum + " සාර්ථකව මකා දමන ලදී! 🗑️");
+                event.target.reset();
+            })
+            .catch((error) => alert("මැකීමේදී දෝෂයක් සිදු විය: " + error.message));
+        }
+
+        // 6. ඩ්‍රාමා එක, එහි එපිසෝඩ්ස් සහ චැට් එක සම්පූර්ණයෙන්ම මැකීම (Delete Entire Drama, Episodes & Chat)
+        async function deleteDrama(event) {
+            event.preventDefault();
+            let dramaKey = document.getElementById('delDramaKey').value.trim().toLowerCase();
+
+            if (!confirm(`ඔබට විශ්වාසද "${dramaKey}" ඩ්‍රාමා එක, එහි සියලුම එපිසෝඩ්ස් සහ චැට් මැසේජ් සියල්ල සම්පූර්ණයෙන්ම මකා දැමීමට අවශ්‍ය බව?`)) {
+                return;
+            }
+
+            try {
+                // 1. Episodes Sub-collection එක මකා දැමීම
+                const episodesSnapshot = await db.collection("dramas").doc(dramaKey).collection("episodes").get();
+                let batch = db.batch();
+                
+                episodesSnapshot.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+
+                // 2. අදාළ Chat Collection එකේ ඇති මැසේජ් සියල්ල මකා දැමීම (අලුතින් එකතු කළ කොටස)
+                const chatSnapshot = await db.collection(dramaKey + "_chat").get();
+                let chatBatch = db.batch();
+                
+                chatSnapshot.forEach((doc) => {
+                    chatBatch.delete(doc.ref);
+                });
+                await chatBatch.commit();
+
+                // 3. ප්‍රධාන Drama Document එක මකා දැමීම
+                await db.collection("dramas").doc(dramaKey).delete();
+
+                alert("ඩ්‍රාමා එක, එහි එපිසෝඩ්ස් සහ චැට් සියල්ල සාර්ථකව මකා දමන ලදී! 🗑️✨");
+                event.target.reset();
+            } catch (error) {
+                alert("මැකීමේදී දෝෂයක් සිදු විය: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CM Movie World - Dramas & Movies</title>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase App, Auth, and Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f0f0f;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header / Navigation Bar (PC View) --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 50px;
+            background: rgba(18, 18, 18, 0.98);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #222;
+        }
+
+        .logo {
+            font-size: 30px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .logo span {
+            color: #e50914;
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        nav a {
+            color: #b3b3b3;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 17px;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        nav a:hover, nav a.active {
+            color: #fff;
+        }
+
+        .nav-right-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #202020;
+            padding: 11px 20px;
+            border-radius: 30px;
+            border: 1px solid #444;
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus-within {
+            border-color: #3ea6ff;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 16px;
+            width: 240px;
+        }
+
+        .search-box input::placeholder {
+            color: #888;
+        }
+
+        .search-box i {
+            color: #aaa;
+            font-size: 16px;
+        }
+
+        .search-results-dropdown {
+            display: none;
+            position: absolute;
+            top: 56px;
+            right: 0;
+            width: 340px;
+            background: #1f1f1f;
+            border: 1px solid #444;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9);
+            z-index: 2000;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 18px;
+            text-decoration: none;
+            border-bottom: 1px solid #2a2a2a;
+            transition: background 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: #2c2c2c;
+        }
+
+        .search-result-item img {
+            width: 50px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .search-result-info h4 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .search-result-info p {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .login-nav-btn {
+            background-color: #e50914;
+            color: white;
+            border: none;
+            padding: 11px 26px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        .login-nav-btn:hover {
+            background-color: #f40612;
+        }
+
+        .profile-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-profile-display img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e50914;
+        }
+
+        .profile-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 56px;
+            background: #1f1f1f;
+            border: 1px solid #444;
+            border-radius: 10px;
+            width: 200px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9);
+            z-index: 2000;
+            overflow: hidden;
+        }
+
+        .profile-menu-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #333;
+            background: #141414;
+        }
+
+        .profile-menu-header span {
+            display: block;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .profile-menu-header .user-name-text {
+            font-size: 14px;
+            color: #fff;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-dropdown-menu button, .profile-dropdown-menu a {
+            width: 100%;
+            padding: 14px 16px;
+            background: none;
+            border: none;
+            color: #ff4444;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .profile-dropdown-menu button:hover, .profile-dropdown-menu a:hover {
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .hero {
+            position: relative;
+            height: 40vh;
+            min-height: 280px;
+            display: flex;
+            align-items: flex-end;
+            padding: 30px 50px;
+        }
+
+        .hero-content {
+            max-width: 650px;
+        }
+
+        .hero-content h1 {
+            font-size: 38px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #fff;
+            line-height: 1.2;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .hero-content p {
+            font-size: 15px;
+            color: #ccc;
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        .btn-watch {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #e50914;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+            transition: transform 0.2s, background 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-watch:hover {
+            background-color: #f40612;
+            transform: scale(1.05);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 50px;
+            flex: 1;
+            width: 100%;
+        }
+
+        .container h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            border-left: 5px solid #e50914;
+            padding-left: 12px;
+            color: #fff;
+        }
+
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 25px;
+        }
+
+        .movie-card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .movie-card {
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(229, 9, 20, 0.3);
+            border-color: rgba(229, 9, 20, 0.4);
+        }
+
+        .card-img {
+            position: relative;
+            height: 320px;
+            background: #000;
+        }
+
+        .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .movie-card:hover .card-img img {
+            transform: scale(1.05);
+        }
+
+        .badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background-color: #e50914;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-info {
+            padding: 16px;
+        }
+
+        .card-info h3 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .card-info p {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .login-modal {
+            display: none; 
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .login-modal-content {
+            background-color: #141414;
+            padding: 35px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            color: white;
+            position: relative;
+            box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.9);
+            border: 1px solid #333;
+        }
+
+        .login-modal-content h2 {
+            margin-bottom: 25px;
+            font-size: 26px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            border-left: none;
+            padding-left: 0;
+        }
+
+        .google-login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #ffffff;
+            color: #333;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            transition: background 0.2s;
+        }
+
+        .google-login-btn:hover {
+            background-color: #f1f1f1;
+        }
+
+        .google-login-btn i {
+            color: #4285F4;
+            font-size: 16px;
+        }
+
+        .divider {
+            text-align: center;
+            border-bottom: 1px solid #333;
+            line-height: 0.1em;
+            margin: 25px 0;
+        }
+
+        .divider span {
+            background: #141414;
+            padding: 0 10px;
+            color: #777;
+            font-size: 12px;
+        }
+
+        .login-input-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .login-input-group label {
+            display: block;
+            font-size: 13px;
+            color: #b3b3b3;
+            margin-bottom: 6px;
+        }
+
+        .login-input-group input {
+            width: 100%;
+            padding: 13px;
+            background-color: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .login-input-group input:focus {
+            border-color: #e50914;
+        }
+
+        .login-submit-btn {
+            width: 100%;
+            padding: 13px;
+            background-color: #e50914;
+            color: white;
+            border: none;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: background 0.3s;
+        }
+
+        .login-submit-btn:hover {
+            background-color: #f40612;
+        }
+
+        .login-close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            color: #aaa;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .login-close-btn:hover {
+            color: #fff;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            background-color: #0b0b0b;
+            color: #777;
+            font-size: 14px;
+            border-top: 1px solid #222;
+            margin-top: auto;
+        }
+
+        @media (max-width: 650px) {
+            header {
+                padding: 14px 18px;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .logo {
+                order: 1;
+                font-size: 22px;
+            }
+
+            nav {
+                order: 2;
+                gap: 15px;
+                margin-left: auto;
+            }
+
+            nav a {
+                font-size: 15px;
+                margin: 0;
+            }
+
+            .nav-right-section {
+                order: 3;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 12px;
+                margin-top: 4px;
+            }
+
+            .search-container {
+                flex: 1;
+                margin-right: 15px;
+            }
+
+            .search-box {
+                width: 100%;
+                padding: 9px 15px;
+            }
+
+            .search-box input {
+                width: 100%;
+                font-size: 15px;
+            }
+
+            .search-results-dropdown {
+                width: 100%;
+                left: 0;
+                right: auto;
+            }
+
+            .login-nav-btn {
+                padding: 9px 20px;
+                font-size: 14px;
+            }
+
+            .user-profile-display img {
+                width: 38px;
+                height: 38px;
+            }
+
+            .hero {
+                height: 35vh;
+                min-height: 240px;
+                padding: 20px;
+                align-items: center;
+                text-align: center;
+            }
+
+            .hero-content {
+                max-width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-content h1 {
+                font-size: 26px;
+            }
+
+            .hero-content p {
+                font-size: 13px;
+            }
+
+            .container {
+                padding: 25px 15px;
+            }
+
+            .movie-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .card-img {
+                height: 220px;
+            }
+
+            .card-info {
+                padding: 12px;
+            }
+
+            .card-info h3 {
+                font-size: 15px;
+            }
+
+            .card-info p {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navigation Bar -->
+    <header>
+        <div class="logo">CM <span>Movie World</span></div>
+        <nav>
+			<a href="index.html" class="active">Home</a>
+			<a href="dramas.html">Dramas</a>
+			<a href="#">Movies</a>
+			<a href="#">Genres</a>
+        </nav>
+        
+        <div class="nav-right-section">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search dramas..." onkeyup="searchMovies()">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <div id="searchDropdown" class="search-results-dropdown"></div>
+            </div>
+
+            <div id="authContainer">
+                <button id="navLoginBtn" class="login-nav-btn" onclick="openLoginModal()">Sign In</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero / Banner Section -->
+    <section class="hero" style="background: linear-gradient(to top, #0f0f0f 5%, rgba(15,15,15,0.4) 50%, rgba(15,15,15,0.8)), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1400&q=80'); background-size: cover; background-position: center;">
+        <div class="hero-content">
+            <h1>Unlimited Dramas & Movies</h1>
+            <p>Watch your favorite Asian dramas and movies in high quality, completely free with an amazing streaming experience.</p>
+            <a href="goblin.html?id=goblin" class="btn-watch"><i class="fa-solid fa-play"></i> Watch Now</a>
+        </div>
+    </section>
+
+    <!-- Content Section (Trending Dramas - Auto Generated via Firebase Firestore) -->
+    <main class="container">
+        <h2>Trending Dramas</h2>
+        
+        <div class="movie-grid" id="movieGrid">
+            <!-- Firebase එකෙන් ඩ්‍රාමා කාඩ්ස් ස්වයංක්‍රීයව මෙතනට ලෝඩ් වේ -->
+        </div>
+    </main>
+
+    <!-- Login Modal Box -->
+    <div id="loginModalBox" class="login-modal">
+        <div class="login-modal-content">
+            <button class="login-close-btn">&times;</button>
+            <h2 id="modalTitle">Sign In</h2>
+            
+            <button type="button" class="google-login-btn" onclick="signInWithGoogle()">
+                <i class="fa-brands fa-google"></i> Continue with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
+
+            <form id="loginForm" onsubmit="handleEmailAuth(event)">
+                <div class="login-input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="login-input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="login-submit-btn">Login</button>
+            </form>
+
+            <p class="auth-switch-text" style="text-align: center; margin-top: 15px; font-size: 14px; color: #aaa;">
+                <span id="switchText">Don't have an account?</span> 
+                <a href="#" id="switchLink" onclick="toggleAuthMode(event)" style="color: #e50914; text-decoration: none; font-weight: bold;">Sign Up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CM Movie World. All Rights Reserved.</p>
+    </footer>
+
+    <!-- JavaScript for Firebase, Dynamic Cards, Search, and Authentication -->
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
+            authDomain: "cm-movie-world.firebaseapp.com",
+            projectId: "cm-movie-world",
+            storageBucket: "cm-movie-world.firebasestorage.app",
+            messagingSenderId: "9868705427",
+            appId: "1:9868705427:web:80d7b0a78496562bfe9766",
+            measurementId: "G-52QRFKZRBY"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const ADMIN_UID = "l7YbcsX71dheETohs1YSnzdRkry2"; // ඔයාගේ ඇඩ්මින් UID එක
+
+        let isSignUpMode = false;
+
+        // --- Load Trending Dramas Automatically from Firebase Firestore ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('movieGrid');
+            if (grid) {
+                grid.innerHTML = "<p style='color: #888;'>Loading dramas...</p>";
+
+                db.collection("dramas").get().then((querySnapshot) => {
+                    grid.innerHTML = "";
+                    
+                    if (querySnapshot.empty) {
+                        grid.innerHTML = "<p style='color: #888;'>No dramas added yet.</p>";
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        let drama = doc.data();
+                        let dramaKey = doc.id; // උදා: goblin, vincenzo
+
+                        let cardLink = document.createElement('a');
+                        cardLink.href = `goblin.html?id=${dramaKey}`;
+                        cardLink.className = 'movie-card-link';
+                        
+                        cardLink.setAttribute('data-title', drama.title.toLowerCase());
+                        cardLink.setAttribute('data-url', `goblin.html?id=${dramaKey}`);
+                        cardLink.setAttribute('data-img', drama.poster);
+                        cardLink.setAttribute('data-desc', `${drama.genres} • ${drama.episodesCount}`);
+
+                        cardLink.innerHTML = `
+                            <div class="movie-card">
+                                <div class="card-img">
+                                    <img src="${drama.poster}" alt="${drama.title}">
+                                    <span class="badge">POPULAR</span>
+                                </div>
+                                <div class="card-info">
+                                    <h3>${drama.title}</h3>
+                                    <p>${drama.genres} • ${drama.episodesCount}</p>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(cardLink);
+                    });
+                }).catch((error) => {
+                    console.error("Error loading dramas: ", error);
+                    grid.innerHTML = "<p style='color: #ff4444;'>Failed to load dramas.</p>";
+                });
+            }
+        });
+
+        // --- Authentication & Admin Profile Dropdown State ---
+        auth.onAuthStateChanged((user) => {
+            let authContainer = document.getElementById("authContainer");
+            if (user) {
+                let displayPhoto = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+                let userName = user.displayName || user.email.split('@')[0] || "User";
+                
+                // ඇඩ්මින් කෙනෙක් නම් පමණක් ඩ්‍රොප්ඩවුන් මෙනු එකට "Admin Panel" ලින්ක් එක පෙන්වීම
+                let adminPanelHtml = "";
+                if (user.uid === ADMIN_UID) {
+                    adminPanelHtml = `<a href="admin.html"><i class="fa-solid fa-user-shield" style="color: #ff9900;"></i> Admin Panel</a>`;
+                }
+
+                authContainer.innerHTML = `
+                    <div class="profile-wrapper">
+                        <div class="user-profile-display" onclick="toggleProfileMenu(event)" title="Account Menu">
+                            <img src="${displayPhoto}" alt="Profile">
+                        </div>
+                        <div id="profileDropdown" class="profile-dropdown-menu">
+                            <div class="profile-menu-header">
+                                <span>Signed in as</span>
+                                <span class="user-name-text">${userName}</span>
+                            </div>
+                            ${adminPanelHtml}
+                            <button onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                authContainer.innerHTML = `<button id="navLoginBtn" class="login-nav-btn" onclick="openLoginModal()">Sign In</button>`;
+            }
+        });
+
+        function toggleProfileMenu(event) {
+            event.stopPropagation();
+            let menu = document.getElementById('profileDropdown');
+            if (menu) {
+                menu.style.display = (menu.style.display === "block") ? "none" : "block";
+            }
+        }
+
+        window.addEventListener('click', function() {
+            let menu = document.getElementById('profileDropdown');
+            if (menu) {
+                menu.style.display = "none";
+            }
+        });
+
+        function openLoginModal() {
+            document.getElementById('loginModalBox').style.display = "flex";
+        }
+
+        document.querySelector('.login-close-btn').onclick = function() {
+            document.getElementById('loginModalBox').style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('loginModalBox');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function toggleAuthMode(event) {
+            event.preventDefault();
+            isSignUpMode = !isSignUpMode;
+            let modalTitle = document.getElementById('modalTitle');
+            let authSubmitBtn = document.getElementById('authSubmitBtn');
+            let switchText = document.getElementById('switchText');
+            let switchLink = document.getElementById('switchLink');
+
+            if (isSignUpMode) {
+                modalTitle.innerText = "Create Account";
+                authSubmitBtn.innerText = "Sign Up";
+                switchText.innerText = "Already have an account?";
+                switchLink.innerText = "Sign In";
+            } else {
+                modalTitle.innerText = "Sign In";
+                authSubmitBtn.innerText = "Login";
+                switchText.innerText = "Don't have an account?";
+                switchLink.innerText = "Sign Up";
+            }
+        }
+
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+            .then((result) => {
+                let user = result.user;
+                db.collection("users").doc(user.uid).set({
+                    name: user.displayName,
+                    email: user.email,
+                    photo: user.photoURL,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                alert("Welcome, " + user.displayName + "!");
+                document.getElementById('loginModalBox').style.display = "none";
+            })
+            .catch((error) => {
+                console.error("Google Login Error: ", error.message);
+                alert("Google Login failed: " + error.message);
+            });
+        }
+
+        function handleEmailAuth(event) {
+            event.preventDefault();
+            let email = document.getElementById('loginEmail').value.trim();
+            let password = document.getElementById('loginPassword').value;
+
+            if (isSignUpMode) {
+                auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    let user = userCredential.user;
+                    let defaultPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+
+                    db.collection("users").doc(user.uid).set({
+                        name: email.split('@')[0],
+                        email: email,
+                        photo: defaultPhoto,
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    alert("Account created successfully!");
+                    document.getElementById('loginModalBox').style.display = "none";
+                })
+                .catch((error) => {
+                    alert("Sign Up Failed: " + error.message);
+                });
+            } else {
+                auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert("Login Successful!");
+                    document.getElementById('loginModalBox').style.display = "none";
+                })
+                .catch((error) => {
+                    alert("Login Failed: " + error.message);
+                });
+            }
+        }
+
+        function handleLogout() {
+            auth.signOut().then(() => {
+                location.reload();
+            }).catch((error) => {
+                console.error("Logout Error: ", error);
+            });
+        }
+
+        function searchMovies() {
+            let input = document.getElementById('searchInput').value.toLowerCase().trim();
+            let dropdown = document.getElementById('searchDropdown');
+            let grid = document.getElementById('movieGrid');
+            let cards = grid.getElementsByClassName('movie-card-link');
+
+            dropdown.innerHTML = "";
+
+            if (input === "") {
+                dropdown.style.display = "none";
+                for (let i = 0; i < cards.length; i++) {
+                    cards[i].style.display = "";
+                }
+                return;
+            }
+
+            let matchCount = 0;
+
+            for (let i = 0; i < cards.length; i++) {
+                let title = cards[i].getAttribute('data-title').toLowerCase();
+                let url = cards[i].getAttribute('data-url');
+                let img = cards[i].getAttribute('data-img');
+                let desc = cards[i].getAttribute('data-desc');
+                let cardName = cards[i].querySelector('h3').innerText;
+
+                if (title.includes(input)) {
+                    cards[i].style.display = "";
+                    matchCount++;
+
+                    let item = document.createElement('a');
+                    item.href = url;
+                    item.className = 'search-result-item';
+                    item.innerHTML = `
+                        <img src="${img}" alt="${cardName}">
+                        <div class="search-result-info">
+                            <h4>${cardName}</h4>
+                            <p>${desc}</p>
+                        </div>
+                    `;
+                    dropdown.appendChild(item);
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+
+            if (matchCount > 0) {
+                dropdown.style.display = "block";
+            } else {
+                dropdown.style.display = "none";
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            let searchBox = document.querySelector('.search-container');
+            if (searchBox && !searchBox.contains(e.target)) {
+                let dropdown = document.getElementById('searchDropdown');
+                if(dropdown) dropdown.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>
