@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CM Movie World - Watch</title>
+    <title>C-MO - Watch</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Link External CSS -->
@@ -13,12 +13,27 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* Logo color styling */
+        .logo {
+            font-size: 30px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .logo .red-dash, .logo .red-o {
+            color: #e50914;
+        }
+    </style>
 </head>
 <body>
 
     <!-- Navigation Bar -->
     <header>
-        <a href="index.html" class="logo">CM <span>Movie World</span></a>
+        <a href="index.html" class="logo">C<span class="red-dash">-</span>M<span class="red-o">O</span></a>
         <nav>
             <a href="index.html">Home</a>
             <a href="dramas.html">Dramas</a>
@@ -152,7 +167,7 @@
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2026 CM Movie World. All Rights Reserved.</p>
+        <p>&copy; 2026 C-MO. All Rights Reserved.</p>
     </footer>
 
     <!-- JavaScript -->
@@ -189,7 +204,7 @@
             db.collection("dramas").doc(dramaKey).get().then((doc) => {
                 if (doc.exists) {
                     let drama = doc.data();
-                    document.title = drama.title + " - CM Movie World";
+                    document.title = drama.title + " - C-MO";
                     document.getElementById('dramaTitleText').innerText = drama.title;
                     document.getElementById('dramaDescText').innerText = drama.description;
                     document.getElementById('dramaPosterImg').src = drama.poster;
@@ -592,7 +607,7 @@
             });
         }
 
-        function escapeHtml(text) {
+        function, escapeHtml(text) {
             let map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
