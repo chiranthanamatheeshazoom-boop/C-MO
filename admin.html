@@ -37,6 +37,31 @@
             margin-bottom: 20px; 
             text-align: center; 
         }
+
+        /* Login Screen Styles */
+        #login-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .google-btn {
+            background: #db4437;
+            color: #white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .google-btn:hover {
+            background: #c23321;
+        }
         
         .section-box { 
             background: #222; 
@@ -103,153 +128,171 @@
 
     <div class="admin-container">
         <h2><i class="fa-solid fa-cloud-arrow-up"></i> CM Movie World Admin Panel</h2>
+
+        <!-- Login Screen (ලොග් වී නැති නම් පෙන්වයි) -->
+        <div id="login-screen">
+            <h3>Admin Authentication Required</h3>
+            <p style="color: #aaa; margin-bottom: 20px;">මෙම පැනලය භාවිත කිරීමට කරුණාකර ඔබගේ ඇඩ්මින් ගිණුමෙන් ඇතුල් වන්න.</p>
+            <button class="google-btn" onclick="loginWithGoogle()">
+                <i class="fa-brands fa-google"></i> Login with Google
+            </button>
+        </div>
         
-        <!-- 1. අලුත් ඩ්‍රාමා එකක් ඇඩ් කිරීම -->
-        <div class="section-box">
-            <h3><i class="fa-solid fa-film"></i> 1. Add New Drama</h3>
-            <form onsubmit="addNewDrama(event)">
-                <div class="form-group">
-                    <label>Drama Key (English simple letters, e.g., goblin)</label>
-                    <input type="text" id="dramaKey" placeholder="goblin" required>
-                </div>
-                <div class="form-group">
-                    <label>Drama Title</label>
-                    <input type="text" id="dramaTitle" placeholder="Goblin" required>
-                </div>
-                <div class="form-group">
-                    <label>Poster Image Link (Archive.org or Image URL)</label>
-                    <input type="text" id="dramaPoster" placeholder="https://archive.org/download/.../poster.jpg" required>
-                </div>
-                <div class="form-group">
-                    <label>Genres (e.g., Action, Crime, Romance)</label>
-                    <input type="text" id="dramaGenres" placeholder="Fantasy, Romance" required>
-                </div>
-                <div class="form-group">
-                    <label>Total Episodes Count (e.g., 16 Episodes)</label>
-                    <input type="text" id="dramaEpisodesCount" placeholder="16 Episodes" required>
-                </div>
-                <div class="form-group">
-                    <label>Release Year (e.g., 2026)</label>
-                    <input type="text" id="dramaYear" placeholder="2026" required>
-                </div>
-                <div class="form-group">
-                    <label>Rating (e.g., ⭐ 9.3/10)</label>
-                    <input type="text" id="dramaRating" placeholder="⭐ 9.3/10" required>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="dramaDesc" rows="3" placeholder="Short description..." required></textarea>
-                </div>
-                <button type="submit">Save Drama to Database</button>
-            </form>
-        </div>
+        <!-- Admin Panel Content (ලොග් වූ පසු පමණක් පෙන්වයි) -->
+        <div id="admin-content" style="display: none;">
+            
+            <div style="text-align: right; margin-bottom: 20px;">
+                <span id="admin-email" style="color: #28a745; margin-right: 10px; font-weight: bold;"></span>
+                <button onclick="logoutAdmin()" style="width: auto; padding: 6px 12px; background: #666; font-size: 14px; margin-top: 0;">Logout</button>
+            </div>
 
-        <!-- 2. ඩ්‍රාමා එකකට එපිසෝඩ් එකක් ඇඩ් කිරීම -->
-        <div class="section-box">
-            <h3><i class="fa-solid fa-play-circle"></i> 2. Add Episode to Drama</h3>
-            <form onsubmit="addEpisode(event)">
-                <div class="form-group">
-                    <label>Select Drama Key</label>
-                    <input type="text" id="epDramaKey" placeholder="goblin" required>
-                </div>
-                <div class="form-group">
-                    <label>Episode Number (e.g., 1, 2, 3...)</label>
-                    <input type="number" id="epNumber" placeholder="1" required>
-                </div>
-                <div class="form-group">
-                    <label>Archive.org Direct Video Link (Optional)</label>
-                    <input type="text" id="epVideoUrl" placeholder="https://archive.org/download/.../ep1.mp4">
-                </div>
-                <button type="submit" style="background: #28a745;">Add Episode</button>
-            </form>
-        </div>
+            <!-- 1. අලුත් ඩ්‍රාමා එකක් ඇඩ් කිරීම -->
+            <div class="section-box">
+                <h3><i class="fa-solid fa-film"></i> 1. Add New Drama</h3>
+                <form onsubmit="addNewDrama(event)">
+                    <div class="form-group">
+                        <label>Drama Key (English simple letters, e.g., goblin)</label>
+                        <input type="text" id="dramaKey" placeholder="goblin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Drama Title</label>
+                        <input type="text" id="dramaTitle" placeholder="Goblin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Poster Image Link (Archive.org or Image URL)</label>
+                        <input type="text" id="dramaPoster" placeholder="https://archive.org/download/.../poster.jpg" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Genres (e.g., Action, Crime, Romance)</label>
+                        <input type="text" id="dramaGenres" placeholder="Fantasy, Romance" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Episodes Count (e.g., 16 Episodes)</label>
+                        <input type="text" id="dramaEpisodesCount" placeholder="16 Episodes" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Release Year (e.g., 2026)</label>
+                        <input type="text" id="dramaYear" placeholder="2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Rating (e.g., ⭐ 9.3/10)</label>
+                        <input type="text" id="dramaRating" placeholder="⭐ 9.3/10" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="dramaDesc" rows="3" placeholder="Short description..." required></textarea>
+                    </div>
+                    <button type="submit">Save Drama to Database</button>
+                </form>
+            </div>
 
-        <!-- 3. එපිසෝඩ් ලින්ක් එක වෙනස් කිරීම (Edit / Update Episode) -->
-        <div class="section-box" style="border-color: #ff9900;">
-            <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 3. Update Existing Episode Link</h3>
-            <form onsubmit="updateEpisode(event)">
-                <div class="form-group">
-                    <label>Drama Key (e.g., goblin)</label>
-                    <input type="text" id="upDramaKey" placeholder="goblin" oninput="checkEpisodeStatus()" required>
-                </div>
-                <div class="form-group">
-                    <label>Episode Number to Update (e.g., 1, 2...)</label>
-                    <input type="number" id="upEpNumber" placeholder="1" oninput="checkEpisodeStatus()" required>
-                </div>
-                <div class="form-group">
-                    <label>Archive.org Video Link (Leave blank if coming soon)</label>
-                    <input type="text" id="upVideoUrl" placeholder="Enter link or leave blank">
-                </div>
-                <button type="submit" style="background: #ff9900; color: #000;">Update Episode Link</button>
-            </form>
-        </div>
+            <!-- 2. ඩ්‍රාමා එකකට එපිසෝඩ් එකක් ඇඩ් කිරීම -->
+            <div class="section-box">
+                <h3><i class="fa-solid fa-play-circle"></i> 2. Add Episode to Drama</h3>
+                <form onsubmit="addEpisode(event)">
+                    <div class="form-group">
+                        <label>Select Drama Key</label>
+                        <input type="text" id="epDramaKey" placeholder="goblin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Episode Number (e.g., 1, 2, 3...)</label>
+                        <input type="number" id="epNumber" placeholder="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Archive.org Direct Video Link (Optional)</label>
+                        <input type="text" id="epVideoUrl" placeholder="https://archive.org/download/.../ep1.mp4">
+                    </div>
+                    <button type="submit" style="background: #28a745;">Add Episode</button>
+                </form>
+            </div>
 
-        <!-- 4. ඩ්‍රාමා එකක විස්තර වෙනස් කිරීම (Update Drama Details) -->
-        <div class="section-box" style="border-color: #ff9900;">
-            <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 4. Update Drama Details</h3>
-            <form onsubmit="updateDramaDetails(event)">
-                <div class="form-group">
-                    <label>Drama Key (e.g., goblin)</label>
-                    <input type="text" id="editDramaKey" placeholder="goblin" oninput="loadDramaDetailsForEdit()" required>
-                </div>
-                <div class="form-group">
-                    <label>Drama Title</label>
-                    <input type="text" id="editDramaTitle" placeholder="Goblin" required>
-                </div>
-                <div class="form-group">
-                    <label>Poster Image Link</label>
-                    <input type="text" id="editDramaPoster" placeholder="https://..." required>
-                </div>
-                <div class="form-group">
-                    <label>Genres</label>
-                    <input type="text" id="editDramaGenres" placeholder="Fantasy, Romance" required>
-                </div>
-                <div class="form-group">
-                    <label>Total Episodes Count</label>
-                    <input type="text" id="editDramaEpisodesCount" placeholder="16 Episodes" required>
-                </div>
-                <div class="form-group">
-                    <label>Release Year</label>
-                    <input type="text" id="editDramaYear" placeholder="2026" required>
-                </div>
-                <div class="form-group">
-                    <label>Rating</label>
-                    <input type="text" id="editDramaRating" placeholder="⭐ 9.3/10" required>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="editDramaDesc" rows="3" placeholder="Description..." required></textarea>
-                </div>
-                <button type="submit" style="background: #ff9900; color: #000;">Update Drama Details</button>
-            </form>
-        </div>
+            <!-- 3. එපිසෝඩ් ලින්ක් එක වෙනස් කිරීම (Edit / Update Episode) -->
+            <div class="section-box" style="border-color: #ff9900;">
+                <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 3. Update Existing Episode Link</h3>
+                <form onsubmit="updateEpisode(event)">
+                    <div class="form-group">
+                        <label>Drama Key (e.g., goblin)</label>
+                        <input type="text" id="upDramaKey" placeholder="goblin" oninput="checkEpisodeStatus()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Episode Number to Update (e.g., 1, 2...)</label>
+                        <input type="number" id="upEpNumber" placeholder="1" oninput="checkEpisodeStatus()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Archive.org Video Link (Leave blank if coming soon)</label>
+                        <input type="text" id="upVideoUrl" placeholder="Enter link or leave blank">
+                    </div>
+                    <button type="submit" style="background: #ff9900; color: #000;">Update Episode Link</button>
+                </form>
+            </div>
 
-        <!-- 5. තනි එපිසෝඩ් එකක් මැකීම (Delete Single Episode) -->
-        <div class="section-box" style="border-color: #a00;">
-            <h3 style="color: #ff4444;"><i class="fa-solid fa-trash"></i> 5. Delete Single Episode</h3>
-            <form onsubmit="deleteSingleEpisode(event)">
-                <div class="form-group">
-                    <label>Drama Key (e.g., goblin)</label>
-                    <input type="text" id="delEpDramaKey" placeholder="goblin" required>
-                </div>
-                <div class="form-group">
-                    <label>Episode Number to Delete (e.g., 1, 2...)</label>
-                    <input type="number" id="delEpNumber" placeholder="1" required>
-                </div>
-                <button type="submit" style="background: #dc3545;">Delete Episode</button>
-            </form>
-        </div>
+            <!-- 4. ඩ්‍රාමා එකක විස්තර වෙනස් කිරීම (Update Drama Details) -->
+            <div class="section-box" style="border-color: #ff9900;">
+                <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 4. Update Drama Details</h3>
+                <form onsubmit="updateDramaDetails(event)">
+                    <div class="form-group">
+                        <label>Drama Key (e.g., goblin)</label>
+                        <input type="text" id="editDramaKey" placeholder="goblin" oninput="loadDramaDetailsForEdit()" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Drama Title</label>
+                        <input type="text" id="editDramaTitle" placeholder="Goblin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Poster Image Link</label>
+                        <input type="text" id="editDramaPoster" placeholder="https://..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Genres</label>
+                        <input type="text" id="editDramaGenres" placeholder="Fantasy, Romance" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Episodes Count</label>
+                        <input type="text" id="editDramaEpisodesCount" placeholder="16 Episodes" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Release Year</label>
+                        <input type="text" id="editDramaYear" placeholder="2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <input type="text" id="editDramaRating" placeholder="⭐ 9.3/10" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="editDramaDesc" rows="3" placeholder="Description..." required></textarea>
+                    </div>
+                    <button type="submit" style="background: #ff9900; color: #000;">Update Drama Details</button>
+                </form>
+            </div>
 
-        <!-- 6. ඩ්‍රාමා එක සම්පූර්ණයෙන්ම සහ චැට් එක සමඟ මැකීම (Delete Entire Drama & Chat) -->
-        <div class="section-box" style="border-color: #a00;">
-            <h3 style="color: #ff4444;"><i class="fa-solid fa-trash-can"></i> 6. Delete Entire Drama & Chat</h3>
-            <form onsubmit="deleteDrama(event)">
-                <div class="form-group">
-                    <label>Select Drama Key to Delete</label>
-                    <input type="text" id="delDramaKey" placeholder="goblin" required>
-                </div>
-                <button type="submit" style="background: #dc3545;">Delete Drama & Chat from Database</button>
-            </form>
+            <!-- 5. තනි එපිසෝඩ් එකක් මැකීම (Delete Single Episode) -->
+            <div class="section-box" style="border-color: #a00;">
+                <h3 style="color: #ff4444;"><i class="fa-solid fa-trash"></i> 5. Delete Single Episode</h3>
+                <form onsubmit="deleteSingleEpisode(event)">
+                    <div class="form-group">
+                        <label>Drama Key (e.g., goblin)</label>
+                        <input type="text" id="delEpDramaKey" placeholder="goblin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Episode Number to Delete (e.g., 1, 2...)</label>
+                        <input type="number" id="delEpNumber" placeholder="1" required>
+                    </div>
+                    <button type="submit" style="background: #dc3545;">Delete Episode</button>
+                </form>
+            </div>
+
+            <!-- 6. ඩ්‍රාමා එක සම්පූර්ණයෙන්ම සහ චැට් එක සමඟ මැකීම (Delete Entire Drama & Chat) -->
+            <div class="section-box" style="border-color: #a00;">
+                <h3 style="color: #ff4444;"><i class="fa-solid fa-trash-can"></i> 6. Delete Entire Drama & Chat</h3>
+                <form onsubmit="deleteDrama(event)">
+                    <div class="form-group">
+                        <label>Select Drama Key to Delete</label>
+                        <input type="text" id="delDramaKey" placeholder="goblin" required>
+                    </div>
+                    <button type="submit" style="background: #dc3545;">Delete Drama & Chat from Database</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -268,7 +311,40 @@
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
+        const auth = firebase.auth();
         const db = firebase.firestore();
+
+        const ADMIN_EMAIL = "chiranthanamatheeshazoom@gmail.com";
+
+        // Auth State Monitor
+        auth.onAuthStateChanged((user) => {
+            if (user && user.email === ADMIN_EMAIL) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                document.getElementById('admin-email').innerText = user.email;
+            } else {
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('admin-content').style.display = 'none';
+                if (user && user.email !== ADMIN_EMAIL) {
+                    alert("මෙම පිටුවට ප්‍රවේශ වීමට අවසර ඇත්තේ ඇඩ්මින්ට පමණි!");
+                    auth.signOut();
+                }
+            }
+        });
+
+        // Google Login Function
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+            .catch((error) => {
+                alert("ලොග් වීමේ දෝෂයක්: " + error.message);
+            });
+        }
+
+        // Logout Function
+        function logoutAdmin() {
+            auth.signOut();
+        }
 
         // 1. ඩ්‍රාමා එකක් Save කිරීම
         function addNewDrama(event) {
@@ -453,7 +529,7 @@
                 });
                 await batch.commit();
 
-                // 2. අදාළ Chat Collection එකේ ඇති මැසේජ් සියල්ල මකා දැමීම (අලුතින් එකතු කළ කොටස)
+                // 2. අදාළ Chat Collection එකේ ඇති මැසේජ් සියල්ල මකා දැමීම
                 const chatSnapshot = await db.collection(dramaKey + "_chat").get();
                 let chatBatch = db.batch();
                 
