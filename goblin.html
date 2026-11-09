@@ -15,10 +15,13 @@
     <!-- Link External CSS -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase App, Auth, and Firestore SDKs -->
+    <!-- Firebase App, Auth, and Firestore SDKs (For Drama Details & Chat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Supabase JS SDK (For Super Fast & Stable Views & Likes) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         /* Logo color styling */
@@ -235,7 +238,7 @@
 
     <!-- JavaScript -->
     <script>
-        // --- Firebase Configuration ---
+        // --- Firebase Configuration (For Dramas & Chat) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
             authDomain: "cm-movie-world.firebaseapp.com",
@@ -254,15 +257,16 @@
         const db = firebase.firestore();
         const ADMIN_UID = "l7YbcsX71dheETohs1YSnzdRkry2";
 
+        // --- Supabase Configuration (For Fast, Secure Views & Likes) ---
+        const SUPABASE_URL = "https://vuftwlmdftvyclcjwgld.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_RR8S7DY_I8oUlcCvVntpqg_sahIYtQP";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const urlParams = new URLSearchParams(window.location.search);
         const dramaKey = urlParams.get('drama') || urlParams.get('id') || 'goblin'; 
 
         const CHAT_COLLECTION = dramaKey + "_chat";
         const SETTINGS_DOC = dramaKey + "_settings";
-
-        // --- Safe CountAPI & Episode-wise View System Setup ---
-        const countApiNamespace = 'cm-movie-world';
-        const secretSecretKey = 'cm99_'; // Short & Safe Prefix
         
         let currentEpKey = dramaKey + "_ep1"; 
         const maxViewsPerDay = 5; 
@@ -274,60 +278,85 @@
             return num;
         }
 
+        // --- Supabase Views & Likes Loader ---
         async function initViewsAndLikesForEpisode(epKey) {
             const viewCountSpan = document.getElementById('view-count');
             const likeCountSpan = document.getElementById('like-count');
             const likeBtn = document.getElementById('like-btn');
             
-            const safeEpKey = epKey.replace(/[^a-zA-Z0-9]/g, '');
-            const vKey = `${secretSecretKey}${safeEpKey}v`;
-            const lKey = `${secretSecretKey}${safeEpKey}l`;
-
+            const statId = `${dramaKey}_${epKey}`;
             if(likeBtn) likeBtn.classList.remove('liked');
             if(viewCountSpan) viewCountSpan.innerText = "...";
             if(likeCountSpan) likeCountSpan.innerText = "...";
 
             try {
-                await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${vKey}&value=0`).catch(() => {});
-                await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${lKey}&value=0`).catch(() => {});
+                let { data, error } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).single();
 
-                // Fetch Views
-                const viewRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${vKey}`);
-                const viewData = await viewRes.json();
-                if(viewCountSpan && viewData.value !== undefined) {
-                    viewCountSpan.innerText = formatViewsOrLikes(viewData.value);
+                if (data) {
+                    viewCountSpan.innerText = formatViewsOrLikes(data.views || 0);
+                    likeCountSpan.innerText = formatViewsOrLikes(data.likes || 0);
                 } else {
                     viewCountSpan.innerText = '0';
-                }
-
-                // Fetch Likes
-                const likeRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${lKey}`);
-                const likeData = await likeRes.json();
-                if(likeCountSpan && likeData.value !== undefined) {
-                    likeCountSpan.innerText = formatViewsOrLikes(likeData.value);
-                } else {
                     likeCountSpan.innerText = '0';
+                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: 0, likes: 0 });
                 }
 
-                // Check User Like Status safely via CountAPI
+                // Check User Like Status via Supabase
                 const user = auth.currentUser;
                 if (user && likeBtn) {
-                    const shortUid = user.uid.substring(0, 8);
-                    const userKey = `${secretSecretKey}${safeEpKey}u${shortUid}`;
-                    
-                    await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${userKey}&value=0`).catch(() => {});
-                    const userCheckRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userKey}`);
-                    const userCheckData = await userCheckRes.json();
-                    
-                    if (userCheckData.value && userCheckData.value > 0) {
+                    let { data: likeData } = await supabaseClient.from('user_likes').select('*').eq('id', `${user.uid}_${statId}`).single();
+                    if (likeData) {
                         likeBtn.classList.add('liked');
                     }
                 }
 
             } catch (e) {
-                console.error("CountAPI Init Error:", e);
+                console.error("Supabase Init Error:", e);
                 if(viewCountSpan) viewCountSpan.innerText = '0';
                 if(likeCountSpan) likeCountSpan.innerText = '0';
+            }
+        }
+
+        // --- Supabase Like & Unlike System ---
+        async function handleLikeClick() {
+            const user = auth.currentUser;
+            if (!user) {
+                openLoginModal();
+                return;
+            }
+
+            const statId = `${dramaKey}_${currentEpKey}`;
+            const likeBtn = document.getElementById('like-btn');
+            const likeCountSpan = document.getElementById('like-count');
+            const userLikeId = `${user.uid}_${statId}`;
+
+            let isLiked = likeBtn.classList.contains('liked');
+
+            try {
+                let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).single();
+                let currentLikes = data ? (data.likes || 0) : 0;
+                let currentViews = data ? (data.views || 0) : 0;
+
+                if (isLiked) {
+                    // Unlike (-1)
+                    let newLikes = Math.max(0, currentLikes - 1);
+                    likeBtn.classList.remove('liked');
+                    likeCountSpan.innerText = formatViewsOrLikes(newLikes);
+
+                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: currentViews, likes: newLikes });
+                    await supabaseClient.from('user_likes').delete().eq('id', userLikeId);
+                } else {
+                    // Like (+1)
+                    let newLikes = currentLikes + 1;
+                    likeBtn.classList.add('liked');
+                    likeCountSpan.innerText = formatViewsOrLikes(newLikes);
+
+                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: currentViews, likes: newLikes });
+                    await supabaseClient.from('user_likes').insert([{ id: userLikeId, user_id: user.uid, ep_key: statId }]);
+                }
+            } catch (err) {
+                console.error('Like error:', err);
+                alert("Like කිරීමේදී දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.");
             }
         }
 
@@ -433,20 +462,9 @@
         let replyingToData = null;
         let editingDocId = null;
 
-        function openLoginModal() {
-            document.getElementById('loginModalBox').style.display = "flex";
-        }
-
-        function closeLoginModal() {
-            document.getElementById('loginModalBox').style.display = "none";
-        }
-
-        window.onclick = function(event) {
-            let modal = document.getElementById('loginModalBox');
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
+        function openLoginModal() { document.getElementById('loginModalBox').style.display = "flex"; }
+        function closeLoginModal() { document.getElementById('loginModalBox').style.display = "none"; }
+        window.onclick = function(event) { if (event.target == document.getElementById('loginModalBox')) closeLoginModal(); }
 
         function toggleAuthMode(event) {
             event.preventDefault();
@@ -471,21 +489,16 @@
 
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-            .then((result) => {
+            auth.signInWithPopup(provider).then((result) => {
                 let user = result.user;
                 db.collection("users").doc(user.uid).set({
-                    name: user.displayName,
-                    email: user.email,
-                    photo: user.photoURL,
+                    name: user.displayName, email: user.email, photo: user.photoURL,
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-
                 alert("Welcome, " + user.displayName + "!");
                 closeLoginModal();
                 initViewsAndLikesForEpisode(currentEpKey);
-            })
-            .catch((error) => alert("Google Login failed: " + error.message));
+            }).catch((error) => alert("Google Login failed: " + error.message));
         }
 
         function handleEmailAuth(event) {
@@ -494,37 +507,29 @@
             let password = document.getElementById('loginPassword').value;
 
             if (isSignUpMode) {
-                auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
+                auth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
                     let user = userCredential.user;
                     db.collection("users").doc(user.uid).set({
-                        name: email.split('@')[0],
-                        email: email,
+                        name: email.split('@')[0], email: email,
                         photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     alert("Account created successfully!");
                     closeLoginModal();
                     initViewsAndLikesForEpisode(currentEpKey);
-                })
-                .catch((error) => alert("Sign Up Failed: " + error.message));
+                }).catch((error) => alert("Sign Up Failed: " + error.message));
             } else {
-                auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
+                auth.signInWithEmailAndPassword(email, password).then(() => {
                     alert("Login Successful!");
                     closeLoginModal();
                     initViewsAndLikesForEpisode(currentEpKey);
-                })
-                .catch((error) => alert("Login Failed: " + error.message));
+                }).catch((error) => alert("Login Failed: " + error.message));
             }
         }
 
         function changeEpisode(videoUrl, epName, epNumber) {
             const user = auth.currentUser;
-            if (!user) {
-                openLoginModal();
-                return;
-            }
+            if (!user) { openLoginModal(); return; }
 
             if (videoUrl === 'COMING_SOON' || !videoUrl) {
                 alert("Episode not uploaded yet, coming soon!");
@@ -544,23 +549,13 @@
 
         document.getElementById('moviePlayer').addEventListener('play', function(e) {
             const user = auth.currentUser;
-            if (!user) {
-                e.preventDefault();
-                this.pause();
-                openLoginModal();
-            }
+            if (!user) { e.preventDefault(); this.pause(); openLoginModal(); }
         });
 
         function toggleFullscreen() {
             const playerBox = document.getElementById('playerBox');
-            const player = document.getElementById('moviePlayer');
-            if (player.requestFullscreen) {
-                player.requestFullscreen();
-            } else if (!document.fullscreenElement) {
-                playerBox.requestFullscreen().catch(err => alert(`Fullscreen Error: ${err.message}`));
-            } else {
-                document.exitFullscreen();
-            }
+            if (document.fullscreenElement) document.exitFullscreen();
+            else playerBox.requestFullscreen().catch(err => alert(`Fullscreen Error: ${err.message}`));
         }
 
         function toggleEmojiPicker() {
@@ -609,10 +604,7 @@
         function handleChatSubmit(event) {
             event.preventDefault();
             const user = auth.currentUser;
-            if (!user) {
-                openLoginModal();
-                return;
-            }
+            if (!user) { openLoginModal(); return; }
 
             let inputField = document.getElementById('chatInputText');
             let messageText = inputField.value.trim();
@@ -620,12 +612,8 @@
 
             if (editingDocId) {
                 db.collection(CHAT_COLLECTION).doc(editingDocId).update({
-                    message: messageText,
-                    edited: true
-                }).then(() => {
-                    inputField.value = "";
-                    cancelActiveAction();
-                });
+                    message: messageText, edited: true
+                }).then(() => { inputField.value = ""; cancelActiveAction(); });
                 return;
             }
 
@@ -656,9 +644,7 @@
 
         function pinMessage(docId, messageText, senderName) {
             db.collection("settings").doc(SETTINGS_DOC).set({
-                pinnedId: docId,
-                pinnedText: messageText,
-                pinnedBy: senderName
+                pinnedId: docId, pinnedText: messageText, pinnedBy: senderName
             }, { merge: true });
         }
 
@@ -747,13 +733,13 @@
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
-        // --- YouTube Style View Logic (1 Minute Watch + Max 5 per Day per Episode) ---
+        // --- YouTube Style View Logic with Supabase ---
         let timerStarted = false;
         const todayDate = new Date().toISOString().split('T')[0];
 
         const moviePlayerElement = document.getElementById('moviePlayer');
         if (moviePlayerElement) {
-            moviePlayerElement.addEventListener('timeupdate', () => {
+            moviePlayerElement.addEventListener('timeupdate', async () => {
                 const storageKey = `${currentEpKey}_views_${todayDate}`;
                 let currentDayViews = parseInt(localStorage.getItem(storageKey)) || 0;
 
@@ -764,76 +750,26 @@
                     currentDayViews++;
                     localStorage.setItem(storageKey, currentDayViews);
 
-                    const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9]/g, '');
-                    const activeVKey = `${secretSecretKey}${safeEpKey}v`;
+                    const statId = `${dramaKey}_${currentEpKey}`;
+                    try {
+                        let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).single();
+                        let currentViews = data ? (data.views || 0) : 0;
+                        let currentLikes = data ? (data.likes || 0) : 0;
+                        let newViews = currentViews + 1;
 
-                    fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeVKey}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            const viewCountSpan = document.getElementById('view-count');
-                            if(viewCountSpan && data.value !== undefined) {
-                                viewCountSpan.innerText = formatViewsOrLikes(data.value);
-                            }
-                        })
-                        .catch(err => console.error('View count error:', err));
+                        const viewCountSpan = document.getElementById('view-count');
+                        if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(newViews);
+
+                        await supabaseClient.from('drama_stats').upsert({ id: statId, views: newViews, likes: currentLikes });
+                    } catch (err) {
+                        console.error('View update error:', err);
+                    }
                 }
             });
 
             moviePlayerElement.addEventListener('play', () => {
                 timerStarted = false;
             });
-        }
-
-        // 💖 Safe & Fixed CountAPI Like & Unlike System
-        async function handleLikeClick() {
-            const user = auth.currentUser;
-            if (!user) {
-                openLoginModal();
-                return;
-            }
-
-            const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9]/g, '');
-            const shortUid = user.uid.substring(0, 8);
-            const userKey = `${secretSecretKey}${safeEpKey}u${shortUid}`;
-            const activeLKey = `${secretSecretKey}${safeEpKey}l`;
-            
-            const likeBtn = document.getElementById('like-btn');
-            const likeCountSpan = document.getElementById('like-count');
-
-            try {
-                // Ensure user key exists
-                await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${userKey}&value=0`).catch(() => {});
-                
-                const checkRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userKey}`);
-                const checkData = await checkRes.json();
-                
-                let hasLiked = (checkData.value && checkData.value > 0);
-
-                if (hasLiked) {
-                    // Unlike (-1)
-                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userKey}?value=0`);
-                    likeBtn.classList.remove('liked');
-
-                    const res = await fetch(`https://api.countapi.xyz/update/${countApiNamespace}/${activeLKey}?amount=-1`);
-                    const data = await res.json();
-                    if(likeCountSpan && data.value !== undefined) {
-                        likeCountSpan.innerText = formatViewsOrLikes(data.value);
-                    }
-                } else {
-                    // Like (+1)
-                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userKey}?value=1`);
-                    likeBtn.classList.add('liked');
-
-                    const res = await fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeLKey}`);
-                    const data = await res.json();
-                    if(likeCountSpan && data.value !== undefined) {
-                        likeCountSpan.innerText = formatViewsOrLikes(data.value);
-                    }
-                }
-            } catch (err) {
-                console.error('Like error:', err);
-                alert("Like කිරීමේදී දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.");
-            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
