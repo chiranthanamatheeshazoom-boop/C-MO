@@ -260,9 +260,9 @@
         const CHAT_COLLECTION = dramaKey + "_chat";
         const SETTINGS_DOC = dramaKey + "_settings";
 
-        // --- Robust CountAPI & Episode-wise View System Setup ---
+        // --- Safe CountAPI & Episode-wise View System Setup ---
         const countApiNamespace = 'cm-movie-world';
-        const secretSecretKey = 'cm_sec_99x7k_'; 
+        const secretSecretKey = 'cm99_'; // Short & Safe Prefix
         
         let currentEpKey = dramaKey + "_ep1"; 
         const maxViewsPerDay = 5; 
@@ -279,17 +279,15 @@
             const likeCountSpan = document.getElementById('like-count');
             const likeBtn = document.getElementById('like-btn');
             
-            // Clean key generation for CountAPI
-            const safeEpKey = epKey.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const vKey = `${secretSecretKey}${safeEpKey}_views`;
-            const lKey = `${secretSecretKey}${safeEpKey}_likes`;
+            const safeEpKey = epKey.replace(/[^a-zA-Z0-9]/g, '');
+            const vKey = `${secretSecretKey}${safeEpKey}v`;
+            const lKey = `${secretSecretKey}${safeEpKey}l`;
 
             if(likeBtn) likeBtn.classList.remove('liked');
             if(viewCountSpan) viewCountSpan.innerText = "...";
             if(likeCountSpan) likeCountSpan.innerText = "...";
 
             try {
-                // Ensure keys exist on CountAPI server
                 await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${vKey}&value=0`).catch(() => {});
                 await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${lKey}&value=0`).catch(() => {});
 
@@ -311,13 +309,14 @@
                     likeCountSpan.innerText = '0';
                 }
 
-                // Check if signed-in user already liked this episode
+                // Check User Like Status safely via CountAPI
                 const user = auth.currentUser;
                 if (user && likeBtn) {
-                    const userLikeKey = `${secretSecretKey}${safeEpKey}_liked_${user.uid}`;
-                    await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${userLikeKey}&value=0`).catch(() => {});
+                    const shortUid = user.uid.substring(0, 8);
+                    const userKey = `${secretSecretKey}${safeEpKey}u${shortUid}`;
                     
-                    const userCheckRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeKey}`);
+                    await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${userKey}&value=0`).catch(() => {});
+                    const userCheckRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userKey}`);
                     const userCheckData = await userCheckRes.json();
                     
                     if (userCheckData.value && userCheckData.value > 0) {
@@ -484,7 +483,7 @@
 
                 alert("Welcome, " + user.displayName + "!");
                 closeLoginModal();
-                initViewsAndLikesForEpisode(currentEpKey); // Refresh like status after login
+                initViewsAndLikesForEpisode(currentEpKey);
             })
             .catch((error) => alert("Google Login failed: " + error.message));
         }
@@ -765,8 +764,8 @@
                     currentDayViews++;
                     localStorage.setItem(storageKey, currentDayViews);
 
-                    const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9_-]/g, '_');
-                    const activeVKey = `${secretSecretKey}${safeEpKey}_views`;
+                    const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9]/g, '');
+                    const activeVKey = `${secretSecretKey}${safeEpKey}v`;
 
                     fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeVKey}`)
                         .then(res => res.json())
@@ -785,7 +784,7 @@
             });
         }
 
-        // 💖 Fixed CountAPI Like & Unlike System
+        // 💖 Safe & Fixed CountAPI Like & Unlike System
         async function handleLikeClick() {
             const user = auth.currentUser;
             if (!user) {
@@ -793,22 +792,26 @@
                 return;
             }
 
-            const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const userLikeKey = `${secretSecretKey}${safeEpKey}_liked_${user.uid}`;
-            const activeLKey = `${secretSecretKey}${safeEpKey}_likes`;
+            const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9]/g, '');
+            const shortUid = user.uid.substring(0, 8);
+            const userKey = `${secretSecretKey}${safeEpKey}u${shortUid}`;
+            const activeLKey = `${secretSecretKey}${safeEpKey}l`;
+            
             const likeBtn = document.getElementById('like-btn');
             const likeCountSpan = document.getElementById('like-count');
 
             try {
-                // Check current user liked status from CountAPI
-                const checkRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeKey}`);
+                // Ensure user key exists
+                await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${userKey}&value=0`).catch(() => {});
+                
+                const checkRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userKey}`);
                 const checkData = await checkRes.json();
                 
                 let hasLiked = (checkData.value && checkData.value > 0);
 
                 if (hasLiked) {
                     // Unlike (-1)
-                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeKey}?value=0`);
+                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userKey}?value=0`);
                     likeBtn.classList.remove('liked');
 
                     const res = await fetch(`https://api.countapi.xyz/update/${countApiNamespace}/${activeLKey}?amount=-1`);
@@ -818,7 +821,7 @@
                     }
                 } else {
                     // Like (+1)
-                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeKey}?value=1`);
+                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userKey}?value=1`);
                     likeBtn.classList.add('liked');
 
                     const res = await fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeLKey}`);
