@@ -183,7 +183,7 @@
 
                 <form class="chat-input-area" onsubmit="handleChatSubmit(event)">
                     <button type="button" class="emoji-toggle-btn" onclick="toggleEmojiPicker()"><i class="fa-regular fa-face-smile"></i></button>
-                    <input type="text" id="chatInputText" placeholder="Chat as signed-in user..." required>
+                    <input type="text" id="chatInputText" placeholder="Sign in to chat..." required>
                     <button type="submit" id="chatSubmitBtn" class="chat-send-btn">Send</button>
                 </form>
             </div>
@@ -278,7 +278,7 @@
             return num;
         }
 
-        // --- Supabase Views & Likes Loader (Persistent) ---
+        // --- Supabase Views & Likes Loader ---
         async function initViewsAndLikesForEpisode(epKey) {
             const viewCountSpan = document.getElementById('view-count');
             const likeCountSpan = document.getElementById('like-count');
@@ -290,7 +290,7 @@
             if(likeCountSpan) likeCountSpan.innerText = "...";
 
             try {
-                let { data, error } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
+                let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
 
                 if (data) {
                     viewCountSpan.innerText = formatViewsOrLikes(data.views || 0);
@@ -298,7 +298,7 @@
                 } else {
                     viewCountSpan.innerText = '0';
                     likeCountSpan.innerText = '0';
-                    await supabaseClient.from('drama_stats').insert([{ id: statId, views: 0, likes: 0 }]);
+                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: 0, likes: 0 });
                 }
 
                 const user = auth.currentUser;
@@ -310,8 +310,6 @@
                 }
             } catch (e) {
                 console.error("Supabase Init Error:", e);
-                if(viewCountSpan) viewCountSpan.innerText = '0';
-                if(likeCountSpan) likeCountSpan.innerText = '0';
             }
         }
 
@@ -340,19 +338,19 @@
                     likeBtn.classList.remove('liked');
                     likeCountSpan.innerText = formatViewsOrLikes(newLikes);
 
-                    await supabaseClient.from('drama_stats').update({ likes: newLikes }).eq('id', statId);
+                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: currentViews, likes: newLikes });
                     await supabaseClient.from('user_likes').delete().eq('id', userLikeId);
                 } else {
                     let newLikes = currentLikes + 1;
                     likeBtn.classList.add('liked');
                     likeCountSpan.innerText = formatViewsOrLikes(newLikes);
 
-                    await supabaseClient.from('drama_stats').update({ likes: newLikes }).eq('id', statId);
+                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: currentViews, likes: newLikes });
                     await supabaseClient.from('user_likes').insert([{ id: userLikeId, user_id: user.uid, ep_key: statId }]);
                 }
             } catch (err) {
                 console.error('Like error:', err);
-                alert("Like කිරීමේදී දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.");
+                alert("Like කිරීමේදී දෝෂයක් ඇති විය.");
             }
         }
 
@@ -376,9 +374,6 @@
                         <span>${drama.genres}</span>
                         <span>${drama.rating}</span>
                     `;
-                } else {
-                    document.getElementById('dramaTitleText').innerText = "Drama Not Found";
-                    document.getElementById('dramaDescText').innerText = "මෙම ඩ්‍රාමා එක ඩේටාබේස් එකේ හමු නොවීය.";
                 }
             });
 
@@ -387,7 +382,7 @@
                 gridContainer.innerHTML = "";
 
                 if (querySnapshot.empty) {
-                    gridContainer.innerHTML = "<p style='color: #888;'>No episodes added yet. Please add via Admin Panel.</p>";
+                    gridContainer.innerHTML = "<p style='color: #888;'>No episodes added yet.</p>";
                     document.getElementById('epTitleDisplay').innerText = "Now Playing: Coming Soon";
                     return;
                 }
@@ -448,8 +443,6 @@
                     initViewsAndLikesForEpisode(currentEpKey);
                     document.getElementById('moviePlayer').src = firstVideoUrl;
                     document.getElementById('epTitleDisplay').innerText = "Now Playing: " + firstEpName;
-                } else {
-                    document.getElementById('epTitleDisplay').innerText = "Now Playing: Coming Soon";
                 }
             });
         }
@@ -491,7 +484,6 @@
                     name: user.displayName, email: user.email, photo: user.photoURL,
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-                alert("Welcome, " + user.displayName + "!");
                 closeLoginModal();
                 initViewsAndLikesForEpisode(currentEpKey);
             }).catch((error) => alert("Google Login failed: " + error.message));
@@ -510,23 +502,19 @@
                         photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    alert("Account created successfully!");
                     closeLoginModal();
                     initViewsAndLikesForEpisode(currentEpKey);
                 }).catch((error) => alert("Sign Up Failed: " + error.message));
             } else {
                 auth.signInWithEmailAndPassword(email, password).then(() => {
-                    alert("Login Successful!");
                     closeLoginModal();
                     initViewsAndLikesForEpisode(currentEpKey);
                 }).catch((error) => alert("Login Failed: " + error.message));
             }
         }
 
+        // ලොග් වී නොසිටියත් ඕනෑම කෙනෙක්ට වෙනත් Episode එකක් මාරු කර බලන්න පුළුවන්
         function changeEpisode(videoUrl, epName, epNumber) {
-            const user = auth.currentUser;
-            if (!user) { openLoginModal(); return; }
-
             if (videoUrl === 'COMING_SOON' || !videoUrl) {
                 alert("Episode not uploaded yet, coming soon!");
                 return;
@@ -542,11 +530,6 @@
             document.getElementById('epTitleDisplay').innerText = "Now Playing: " + epName;
             document.getElementById('playerBox').scrollIntoView({ behavior: 'smooth' });
         }
-
-        document.getElementById('moviePlayer').addEventListener('play', function(e) {
-            const user = auth.currentUser;
-            if (!user) { e.preventDefault(); this.pause(); openLoginModal(); }
-        });
 
         function toggleFullscreen() {
             const playerBox = document.getElementById('playerBox');
@@ -581,7 +564,7 @@
             replyingToData = null;
             editingDocId = docId;
             let banner = document.getElementById('activeBanner');
-            document.getElementById('bannerText').innerText = `Editing message: "${currentText.substring(0, 30)}..."`;
+            document.getElementById('bannerText').innerText = `Editing message...`;
             banner.style.display = "flex";
             document.getElementById('chatSubmitBtn').innerText = "Update";
             let inputField = document.getElementById('chatInputText');
@@ -600,7 +583,7 @@
         function handleChatSubmit(event) {
             event.preventDefault();
             const user = auth.currentUser;
-            if (!user) { openLoginModal(); return; }
+            if (!user) { openLoginModal(); return; } // චැට් කරන්න ගියොත් විතරක් ලොග් ඉල්ලයි
 
             let inputField = document.getElementById('chatInputText');
             let messageText = inputField.value.trim();
@@ -729,11 +712,11 @@
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
-        // --- YouTube Style View Logic with Supabase ---
+        // --- YouTube Style View Logic (Works without Sign In) ---
         let timerStarted = false;
         const todayDate = new Date().toISOString().split('T')[0];
-
         const moviePlayerElement = document.getElementById('moviePlayer');
+
         if (moviePlayerElement) {
             moviePlayerElement.addEventListener('timeupdate', async () => {
                 const storageKey = `${currentEpKey}_views_${todayDate}`;
@@ -756,7 +739,12 @@
                         const viewCountSpan = document.getElementById('view-count');
                         if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(newViews);
 
-                        await supabaseClient.from('drama_stats').update({ views: newViews }).eq('id', statId);
+                        // ලොග් වී නොසිටියත් Supabase ඩේටාබේස් එකේ Views අප්ඩේට් වේ
+                        await supabaseClient.from('drama_stats').upsert({ 
+                            id: statId, 
+                            views: newViews, 
+                            likes: currentLikes 
+                        });
                     } catch (err) {
                         console.error('View update error:', err);
                     }
