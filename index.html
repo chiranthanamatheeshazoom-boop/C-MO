@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C-MO - Dramas & Movies</title>
+    
+    <!-- SEO & Search Engine Optimization Tags (Google එකේ හොයනකොට ඉස්මතු වෙන්න) -->
+    <title>C-MO - Watch Free Asian Dramas & Movies Online</title>
+    <meta name="description" content="Stream and watch your favorite Asian dramas, Korean dramas, and movies in high quality online for free on C-MO streaming platform.">
+    <meta name="keywords" content="C-MO, CM Movie World, Asian dramas online, watch free movies, Korean dramas, streaming platform, C-MO movies">
+    <meta name="author" content="C-MO">
+
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -45,13 +51,13 @@
         .logo {
             font-size: 30px;
             font-weight: 800;
-            color: #fff; /* C සහ M සඳහා සුදු පාට */
+            color: #fff;
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
 
         .logo .red-dash, .logo .red-o {
-            color: #e50914; /* - සහ O සඳහා රතු පාට */
+            color: #e50914;
         }
 
         nav {
@@ -667,7 +673,7 @@
         <div class="nav-right-section">
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search dramas..." onkeyup="searchMovies()">
+                    <input type="text" id="searchInput" placeholder="Search dramas & movies..." onkeyup="searchMovies()">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </div>
                 <div id="searchDropdown" class="search-results-dropdown"></div>
@@ -682,15 +688,15 @@
     <!-- Hero / Banner Section -->
     <section class="hero" style="background: linear-gradient(to top, #0f0f0f 5%, rgba(15,15,15,0.4) 50%, rgba(15,15,15,0.8)), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1400&q=80'); background-size: cover; background-position: center;">
         <div class="hero-content">
-            <h1>Unlimited Dramas & Movies</h1>
-            <p>Watch your favorite Asian dramas and movies in high quality, completely free with an amazing streaming experience.</p>
+            <h1>C-MO - Unlimited Dramas & Movies</h1>
+            <p>Watch your favorite Asian dramas and movies in high quality, completely free with an amazing streaming experience on C-MO.</p>
             <a href="goblin.html?id=goblin" class="btn-watch"><i class="fa-solid fa-play"></i> Watch Now</a>
         </div>
     </section>
 
     <!-- Content Section (Trending Dramas - Auto Generated via Firebase Firestore) -->
     <main class="container">
-        <h2>Trending Dramas</h2>
+        <h2>Trending Dramas & Movies</h2>
         
         <div class="movie-grid" id="movieGrid">
             <!-- Firebase එකෙන් ඩ්‍රාමා කාඩ්ස් ස්වයංක්‍රීයව මෙතනට ලෝඩ් වේ -->
@@ -772,7 +778,7 @@
 
                     querySnapshot.forEach((doc) => {
                         let drama = doc.data();
-                        let dramaKey = doc.id; // උදා: goblin, vincenzo
+                        let dramaKey = doc.id;
 
                         let cardLink = document.createElement('a');
                         cardLink.href = `goblin.html?id=${dramaKey}`;
@@ -811,7 +817,6 @@
                 let displayPhoto = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
                 let userName = user.displayName || user.email.split('@')[0] || "User";
                 
-                // ඇඩ්මින් කෙනෙක් නම් පමණක් ඩ්‍රොප්ඩවුන් මෙනු එකට "Admin Panel" ලින්ක් එක පෙන්වීම
                 let adminPanelHtml = "";
                 if (user.uid === ADMIN_UID) {
                     adminPanelHtml = `<a href="admin.html"><i class="fa-solid fa-user-shield" style="color: #ff9900;"></i> Admin Panel</a>`;

@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C-MO - Watch</title>
+    
+    <!-- SEO & Search Engine Optimization Tags (Google එකේ හොයනකොට ඉස්මතු වෙන්න) -->
+    <title>C-MO - Watch Free Asian Dramas & Movies Online</title>
+    <meta name="description" content="Stream and watch your favorite Asian dramas, Korean dramas, and movies in high quality online for free on C-MO streaming platform.">
+    <meta name="keywords" content="C-MO, CM Movie World, Asian dramas online, watch free movies, Korean dramas, streaming platform, C-MO movies">
+    <meta name="author" content="C-MO">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Link External CSS -->
@@ -204,7 +210,7 @@
             db.collection("dramas").doc(dramaKey).get().then((doc) => {
                 if (doc.exists) {
                     let drama = doc.data();
-                    document.title = drama.title + " - C-MO";
+                    document.title = drama.title + " - C-MO Streaming";
                     document.getElementById('dramaTitleText').innerText = drama.title;
                     document.getElementById('dramaDescText').innerText = drama.description;
                     document.getElementById('dramaPosterImg').src = drama.poster;
@@ -258,7 +264,6 @@
                         clickAction = `changeEpisode('${videoUrl}', '${epTitle}')`;
                         statusBadge = `<p style="color: #28a745; font-weight: 600;">Complete 🎬</p>`;
                         
-                        // මුල්ම ලින්ක් එක තියෙන එපිසෝඩ් එක ඩිෆෝල්ට් ප්ලේයර් එකට සෙට් කිරීමට
                         if (!firstVideoUrl) {
                             firstVideoUrl = videoUrl;
                             firstEpName = epTitle;
@@ -282,7 +287,6 @@
                     gridContainer.appendChild(card);
                 });
 
-                // පෝස්ටර් ඉමේජ් එක ඊළඟට කාඩ් වලට ලෝඩ් කිරීම
                 db.collection("dramas").doc(dramaKey).get().then((doc) => {
                     if(doc.exists) {
                         let posterUrl = doc.data().poster;
@@ -290,7 +294,6 @@
                     }
                 });
 
-                // පළමු එපිසෝඩ් එක ප්ලේයර් එකට ලෝඩ් කිරීම
                 if (firstVideoUrl) {
                     document.getElementById('moviePlayer').src = firstVideoUrl;
                     document.getElementById('epTitleDisplay').innerText = "Now Playing: " + firstEpName;
@@ -607,7 +610,6 @@
             });
         }
 
-        // නිවැරදි කරන ලද escapeHtml function එක
         function escapeHtml(text) {
             let map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
