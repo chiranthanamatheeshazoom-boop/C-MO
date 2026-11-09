@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- SEO & Search Engine Optimization Tags (Google එකේ හොයනකොට ඉස්මතු වෙන්න) -->
+    <!-- SEO & Search Engine Optimization Tags -->
     <title>C-MO - Watch Free Asian Dramas & Movies Online</title>
     <meta name="description" content="Stream and watch your favorite Asian dramas, Korean dramas, and movies in high quality online for free on C-MO streaming platform.">
     <meta name="keywords" content="C-MO, CM Movie World, Asian dramas online, watch free movies, Korean dramas, streaming platform, C-MO movies">
@@ -31,6 +31,51 @@
             text-decoration: none;
         }
         .logo .red-dash, .logo .red-o {
+            color: #e50914;
+        }
+
+        /* YouTube Style Stats Bar Styling */
+        .video-stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #181818;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #aaa;
+            font-size: 14px;
+            border: 1px solid #282828;
+        }
+        .video-stats-bar .stats-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .video-stats-bar .stats-left span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #fff;
+            font-weight: 600;
+        }
+        .yt-like-btn {
+            background: #272727;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .yt-like-btn:hover {
+            background: #3f3f3f;
+        }
+        .yt-like-btn.liked {
             color: #e50914;
         }
     </style>
@@ -79,6 +124,18 @@
                 <button class="fullscreen-btn" onclick="toggleFullscreen()">
                     <i class="fa-solid fa-expand"></i> Full Screen
                 </button>
+            </div>
+
+            <!-- YouTube Style Views & Likes Bar -->
+            <div class="video-stats-bar">
+                <div class="stats-left">
+                    <span><i class="fa-solid fa-eye" style="color: #e50914;"></i> <strong id="view-count">...</strong> Views</span>
+                </div>
+                <div class="stats-right">
+                    <button id="like-btn" class="yt-like-btn" onclick="handleLikeClick()">
+                        <i class="fa-solid fa-heart"></i> <span id="like-count">0</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -197,16 +254,78 @@
         const db = firebase.firestore();
         const ADMIN_UID = "l7YbcsX71dheETohs1YSnzdRkry2";
 
-        // URL එකෙන් Drama එක ලබා ගැනීම (උදා: goblin.html?drama=goblin හෝ ?id=vincenzo)
+        // URL එකෙන් Drama එක ලබා ගැනීම (උදා: goblin.html?drama=goblin)
         const urlParams = new URLSearchParams(window.location.search);
         const dramaKey = urlParams.get('drama') || urlParams.get('id') || 'goblin'; 
 
         const CHAT_COLLECTION = dramaKey + "_chat";
         const SETTINGS_DOC = dramaKey + "_settings";
 
+        // --- Secure CountAPI & Episode-wise View System Setup ---
+        const countApiNamespace = 'cm-movie-world';
+        const secretSecretKey = 'cm_sec_99x7k_'; // 🔒 ආරක්ෂිත රහස් පදය (Secret Prefix)
+        
+        let currentEpKey = dramaKey + "_ep1"; 
+        const maxViewsPerDay = 5; // දවසකට උපරිම වාර 5යි
+
+        // 📊 YouTube එකේ වගේ 1K, 1M, 1B පෙන්වන Function එක
+        function formatViewsOrLikes(num) {
+            if (num >= 1000000000) {
+                return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+            }
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            }
+            return num;
+        }
+
+        async function initViewsAndLikesForEpisode(epKey) {
+            const viewCountSpan = document.getElementById('view-count');
+            const likeCountSpan = document.getElementById('like-count');
+            const likeBtn = document.getElementById('like-btn');
+            
+            const vKey = secretSecretKey + epKey + "-views";
+            const lKey = secretSecretKey + epKey + "-likes";
+
+            if(likeBtn) likeBtn.classList.remove('liked');
+
+            try {
+                await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${vKey}&value=0`).catch(() => {});
+                await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${lKey}&value=0`).catch(() => {});
+
+                // Fetch Views
+                const viewRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${vKey}`);
+                const viewData = await viewRes.json();
+                if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(viewData.value);
+
+                // Fetch Likes
+                const likeRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${lKey}`);
+                const likeData = await likeRes.json();
+                if(likeCountSpan) likeCountSpan.innerText = formatViewsOrLikes(likeData.value);
+
+                // 🔍 User කලින් Like කර ඇත්දැයි CountAPI එකෙන්ම පරීක්ෂා කිරීම
+                const user = auth.currentUser;
+                if (user && likeBtn) {
+                    const userLikeApiKey = `${secretSecretKey}${epKey}_liked_${user.uid}`;
+                    const userCheckRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeApiKey}`);
+                    const userCheckData = await userCheckRes.json();
+                    
+                    if (userCheckData.value && userCheckData.value > 0) {
+                        likeBtn.classList.add('liked');
+                    }
+                }
+
+            } catch (e) {
+                if(viewCountSpan) viewCountSpan.innerText = '0';
+                if(likeCountSpan) likeCountSpan.innerText = '0';
+            }
+        }
+
         // 🎬 Firebase එකෙන් ඩ්‍රාමා විස්තර සහ Episodes ලෝඩ් කරගැනීම
         function loadDramaDetails() {
-            // 1. ඩ්‍රාමා ප්‍රධාන විස්තර ලබා ගැනීම
             db.collection("dramas").doc(dramaKey).get().then((doc) => {
                 if (doc.exists) {
                     let drama = doc.data();
@@ -215,12 +334,10 @@
                     document.getElementById('dramaDescText').innerText = drama.description;
                     document.getElementById('dramaPosterImg').src = drama.poster;
                     
-                    // Banner background එක සැකසීම
                     document.getElementById('bannerSection').style.background = `linear-gradient(to top, #0f0f0f 5%, rgba(15,15,15,0.6) 50%, rgba(15,15,15,0.9)), url('${drama.poster}')`;
                     document.getElementById('bannerSection').style.backgroundSize = "cover";
                     document.getElementById('bannerSection').style.backgroundPosition = "center";
 
-                    // Meta tags පිරවීම
                     const metaContainer = document.getElementById('dramaMetaTags');
                     metaContainer.innerHTML = `
                         <span>${drama.year || '2026'}</span>
@@ -234,7 +351,6 @@
                 }
             });
 
-            // 2. අදාළ ඩ්‍රාමා එකේ Episodes සහ Complete/Coming Soon ලොජික් එක ලෝඩ් කිරීම
             db.collection("dramas").doc(dramaKey).collection("episodes").orderBy("episodeNumber").get().then((querySnapshot) => {
                 const gridContainer = document.getElementById('episodesGridContainer');
                 gridContainer.innerHTML = "";
@@ -247,6 +363,7 @@
 
                 let firstVideoUrl = "";
                 let firstEpName = "";
+                let firstEpNum = 1;
 
                 querySnapshot.forEach((epDoc) => {
                     let ep = epDoc.data();
@@ -261,15 +378,16 @@
                     let statusBadge = "";
 
                     if (videoUrl && videoUrl.trim() !== "") {
-                        clickAction = `changeEpisode('${videoUrl}', '${epTitle}')`;
+                        clickAction = `changeEpisode('${videoUrl}', '${epTitle}', ${epNum})`;
                         statusBadge = `<p style="color: #28a745; font-weight: 600;">Complete 🎬</p>`;
                         
                         if (!firstVideoUrl) {
                             firstVideoUrl = videoUrl;
                             firstEpName = epTitle;
+                            firstEpNum = epNum;
                         }
                     } else {
-                        clickAction = `changeEpisode('COMING_SOON', '${epTitle}')`;
+                        clickAction = `changeEpisode('COMING_SOON', '${epTitle}', ${epNum})`;
                         statusBadge = `<p style="color: #ff9900; font-weight: 600;">Coming Soon ⏳</p>`;
                     }
 
@@ -295,6 +413,8 @@
                 });
 
                 if (firstVideoUrl) {
+                    currentEpKey = `${dramaKey}_ep${firstEpNum}`;
+                    initViewsAndLikesForEpisode(currentEpKey);
                     document.getElementById('moviePlayer').src = firstVideoUrl;
                     document.getElementById('epTitleDisplay').innerText = "Now Playing: " + firstEpName;
                 } else {
@@ -390,7 +510,7 @@
             }
         }
 
-        function changeEpisode(videoUrl, epName) {
+        function changeEpisode(videoUrl, epName, epNumber) {
             const user = auth.currentUser;
             if (!user) {
                 openLoginModal();
@@ -401,6 +521,9 @@
                 alert("Episode not uploaded yet, coming soon!");
                 return;
             }
+
+            currentEpKey = `${dramaKey}_ep${epNumber}`;
+            initViewsAndLikesForEpisode(currentEpKey);
 
             const player = document.getElementById('moviePlayer');
             player.src = videoUrl;
@@ -613,6 +736,83 @@
         function escapeHtml(text) {
             let map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // --- YouTube Style View Logic (1 Minute Watch + Max 5 per Day per Episode) ---
+        let timerStarted = false;
+        const todayDate = new Date().toISOString().split('T')[0];
+
+        const moviePlayerElement = document.getElementById('moviePlayer');
+        if (moviePlayerElement) {
+            moviePlayerElement.addEventListener('timeupdate', () => {
+                const storageKey = `${currentEpKey}_views_${todayDate}`;
+                let currentDayViews = parseInt(localStorage.getItem(storageKey)) || 0;
+
+                if (currentDayViews >= maxViewsPerDay || timerStarted) return;
+
+                if (moviePlayerElement.currentTime >= 60) {
+                    timerStarted = true;
+                    currentDayViews++;
+                    localStorage.setItem(storageKey, currentDayViews);
+
+                    const activeVKey = secretSecretKey + currentEpKey + "-views";
+
+                    fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeVKey}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const viewCountSpan = document.getElementById('view-count');
+                            if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(data.value);
+                        })
+                        .catch(err => console.error('View count error:', err));
+                }
+            });
+
+            moviePlayerElement.addEventListener('play', () => {
+                timerStarted = false;
+            });
+        }
+
+        // 💖 CountAPI Permanent Like System with Toggle (Unlike) Support
+        async function handleLikeClick() {
+            const user = auth.currentUser;
+            if (!user) {
+                openLoginModal();
+                return;
+            }
+
+            const userLikeApiKey = `${secretSecretKey}${currentEpKey}_liked_${user.uid}`;
+            const activeLKey = secretSecretKey + currentEpKey + "-likes";
+            const likeBtn = document.getElementById('like-btn');
+            const likeCountSpan = document.getElementById('like-count');
+
+            try {
+                // User මීට පෙර Like කර ඇත්දැයි බැලීම
+                const checkRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeApiKey}`);
+                const checkData = await checkRes.json();
+                
+                let hasLiked = (checkData.value && checkData.value > 0);
+
+                if (hasLiked) {
+                    // 🔄 කලින් Like කරලා නම්, දැන් Unlike කිරීම (Like එක අයින් කිරීම)
+                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeApiKey}?value=0`);
+                    likeBtn.classList.remove('liked');
+
+                    const res = await fetch(`https://api.countapi.xyz/update/${countApiNamespace}/${activeLKey}?amount=-1`);
+                    const data = await res.json();
+                    if(likeCountSpan) likeCountSpan.innerText = formatViewsOrLikes(data.value);
+
+                } else {
+                    // 👍 අලුතින් Like කිරීම (+1)
+                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeApiKey}?value=1`);
+                    likeBtn.classList.add('liked');
+
+                    const res = await fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeLKey}`);
+                    const data = await res.json();
+                    if(likeCountSpan) likeCountSpan.innerText = formatViewsOrLikes(data.value);
+                }
+            } catch (err) {
+                console.error('Like error:', err);
+            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
