@@ -254,31 +254,23 @@
         const db = firebase.firestore();
         const ADMIN_UID = "l7YbcsX71dheETohs1YSnzdRkry2";
 
-        // URL එකෙන් Drama එක ලබා ගැනීම (උදා: goblin.html?drama=goblin)
         const urlParams = new URLSearchParams(window.location.search);
         const dramaKey = urlParams.get('drama') || urlParams.get('id') || 'goblin'; 
 
         const CHAT_COLLECTION = dramaKey + "_chat";
         const SETTINGS_DOC = dramaKey + "_settings";
 
-        // --- Secure CountAPI & Episode-wise View System Setup ---
+        // --- Robust CountAPI & Episode-wise View System Setup ---
         const countApiNamespace = 'cm-movie-world';
-        const secretSecretKey = 'cm_sec_99x7k_'; // 🔒 ආරක්ෂිත රහස් පදය (Secret Prefix)
+        const secretSecretKey = 'cm_sec_99x7k_'; 
         
         let currentEpKey = dramaKey + "_ep1"; 
-        const maxViewsPerDay = 5; // දවසකට උපරිම වාර 5යි
+        const maxViewsPerDay = 5; 
 
-        // 📊 YouTube එකේ වගේ 1K, 1M, 1B පෙන්වන Function එක
         function formatViewsOrLikes(num) {
-            if (num >= 1000000000) {
-                return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
-            }
-            if (num >= 1000000) {
-                return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-            }
-            if (num >= 1000) {
-                return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-            }
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
             return num;
         }
 
@@ -287,30 +279,45 @@
             const likeCountSpan = document.getElementById('like-count');
             const likeBtn = document.getElementById('like-btn');
             
-            const vKey = secretSecretKey + epKey + "-views";
-            const lKey = secretSecretKey + epKey + "-likes";
+            // Clean key generation for CountAPI
+            const safeEpKey = epKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const vKey = `${secretSecretKey}${safeEpKey}_views`;
+            const lKey = `${secretSecretKey}${safeEpKey}_likes`;
 
             if(likeBtn) likeBtn.classList.remove('liked');
+            if(viewCountSpan) viewCountSpan.innerText = "...";
+            if(likeCountSpan) likeCountSpan.innerText = "...";
 
             try {
+                // Ensure keys exist on CountAPI server
                 await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${vKey}&value=0`).catch(() => {});
                 await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${lKey}&value=0`).catch(() => {});
 
                 // Fetch Views
                 const viewRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${vKey}`);
                 const viewData = await viewRes.json();
-                if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(viewData.value);
+                if(viewCountSpan && viewData.value !== undefined) {
+                    viewCountSpan.innerText = formatViewsOrLikes(viewData.value);
+                } else {
+                    viewCountSpan.innerText = '0';
+                }
 
                 // Fetch Likes
                 const likeRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${lKey}`);
                 const likeData = await likeRes.json();
-                if(likeCountSpan) likeCountSpan.innerText = formatViewsOrLikes(likeData.value);
+                if(likeCountSpan && likeData.value !== undefined) {
+                    likeCountSpan.innerText = formatViewsOrLikes(likeData.value);
+                } else {
+                    likeCountSpan.innerText = '0';
+                }
 
-                // 🔍 User කලින් Like කර ඇත්දැයි CountAPI එකෙන්ම පරීක්ෂා කිරීම
+                // Check if signed-in user already liked this episode
                 const user = auth.currentUser;
                 if (user && likeBtn) {
-                    const userLikeApiKey = `${secretSecretKey}${epKey}_liked_${user.uid}`;
-                    const userCheckRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeApiKey}`);
+                    const userLikeKey = `${secretSecretKey}${safeEpKey}_liked_${user.uid}`;
+                    await fetch(`https://api.countapi.xyz/create?namespace=${countApiNamespace}&key=${userLikeKey}&value=0`).catch(() => {});
+                    
+                    const userCheckRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeKey}`);
                     const userCheckData = await userCheckRes.json();
                     
                     if (userCheckData.value && userCheckData.value > 0) {
@@ -319,12 +326,12 @@
                 }
 
             } catch (e) {
+                console.error("CountAPI Init Error:", e);
                 if(viewCountSpan) viewCountSpan.innerText = '0';
                 if(likeCountSpan) likeCountSpan.innerText = '0';
             }
         }
 
-        // 🎬 Firebase එකෙන් ඩ්‍රාමා විස්තර සහ Episodes ලෝඩ් කරගැනීම
         function loadDramaDetails() {
             db.collection("dramas").doc(dramaKey).get().then((doc) => {
                 if (doc.exists) {
@@ -477,6 +484,7 @@
 
                 alert("Welcome, " + user.displayName + "!");
                 closeLoginModal();
+                initViewsAndLikesForEpisode(currentEpKey); // Refresh like status after login
             })
             .catch((error) => alert("Google Login failed: " + error.message));
         }
@@ -498,6 +506,7 @@
                     });
                     alert("Account created successfully!");
                     closeLoginModal();
+                    initViewsAndLikesForEpisode(currentEpKey);
                 })
                 .catch((error) => alert("Sign Up Failed: " + error.message));
             } else {
@@ -505,6 +514,7 @@
                 .then(() => {
                     alert("Login Successful!");
                     closeLoginModal();
+                    initViewsAndLikesForEpisode(currentEpKey);
                 })
                 .catch((error) => alert("Login Failed: " + error.message));
             }
@@ -755,13 +765,16 @@
                     currentDayViews++;
                     localStorage.setItem(storageKey, currentDayViews);
 
-                    const activeVKey = secretSecretKey + currentEpKey + "-views";
+                    const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const activeVKey = `${secretSecretKey}${safeEpKey}_views`;
 
                     fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeVKey}`)
                         .then(res => res.json())
                         .then(data => {
                             const viewCountSpan = document.getElementById('view-count');
-                            if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(data.value);
+                            if(viewCountSpan && data.value !== undefined) {
+                                viewCountSpan.innerText = formatViewsOrLikes(data.value);
+                            }
                         })
                         .catch(err => console.error('View count error:', err));
                 }
@@ -772,7 +785,7 @@
             });
         }
 
-        // 💖 CountAPI Permanent Like System with Toggle (Unlike) Support
+        // 💖 Fixed CountAPI Like & Unlike System
         async function handleLikeClick() {
             const user = auth.currentUser;
             if (!user) {
@@ -780,38 +793,43 @@
                 return;
             }
 
-            const userLikeApiKey = `${secretSecretKey}${currentEpKey}_liked_${user.uid}`;
-            const activeLKey = secretSecretKey + currentEpKey + "-likes";
+            const safeEpKey = currentEpKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const userLikeKey = `${secretSecretKey}${safeEpKey}_liked_${user.uid}`;
+            const activeLKey = `${secretSecretKey}${safeEpKey}_likes`;
             const likeBtn = document.getElementById('like-btn');
             const likeCountSpan = document.getElementById('like-count');
 
             try {
-                // User මීට පෙර Like කර ඇත්දැයි බැලීම
-                const checkRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeApiKey}`);
+                // Check current user liked status from CountAPI
+                const checkRes = await fetch(`https://api.countapi.xyz/get/${countApiNamespace}/${userLikeKey}`);
                 const checkData = await checkRes.json();
                 
                 let hasLiked = (checkData.value && checkData.value > 0);
 
                 if (hasLiked) {
-                    // 🔄 කලින් Like කරලා නම්, දැන් Unlike කිරීම (Like එක අයින් කිරීම)
-                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeApiKey}?value=0`);
+                    // Unlike (-1)
+                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeKey}?value=0`);
                     likeBtn.classList.remove('liked');
 
                     const res = await fetch(`https://api.countapi.xyz/update/${countApiNamespace}/${activeLKey}?amount=-1`);
                     const data = await res.json();
-                    if(likeCountSpan) likeCountSpan.innerText = formatViewsOrLikes(data.value);
-
+                    if(likeCountSpan && data.value !== undefined) {
+                        likeCountSpan.innerText = formatViewsOrLikes(data.value);
+                    }
                 } else {
-                    // 👍 අලුතින් Like කිරීම (+1)
-                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeApiKey}?value=1`);
+                    // Like (+1)
+                    await fetch(`https://api.countapi.xyz/set/${countApiNamespace}/${userLikeKey}?value=1`);
                     likeBtn.classList.add('liked');
 
                     const res = await fetch(`https://api.countapi.xyz/hit/${countApiNamespace}/${activeLKey}`);
                     const data = await res.json();
-                    if(likeCountSpan) likeCountSpan.innerText = formatViewsOrLikes(data.value);
+                    if(likeCountSpan && data.value !== undefined) {
+                        likeCountSpan.innerText = formatViewsOrLikes(data.value);
+                    }
                 }
             } catch (err) {
                 console.error('Like error:', err);
+                alert("Like කිරීමේදී දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.");
             }
         }
 
