@@ -238,7 +238,7 @@
 
     <!-- JavaScript -->
     <script>
-        // --- Firebase Configuration (For Dramas & Chat) ---
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyCIz8pDc6Dy18rNnHamAlJHV5O6UTQFetI",
             authDomain: "cm-movie-world.firebaseapp.com",
@@ -257,7 +257,7 @@
         const db = firebase.firestore();
         const ADMIN_UID = "l7YbcsX71dheETohs1YSnzdRkry2";
 
-        // --- Supabase Configuration (For Fast, Secure Views & Likes) ---
+        // --- Supabase Configuration ---
         const SUPABASE_URL = "https://vuftwlmdftvyclcjwgld.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_RR8S7DY_I8oUlcCvVntpqg_sahIYtQP";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -278,7 +278,7 @@
             return num;
         }
 
-        // --- Supabase Views & Likes Loader ---
+        // --- Supabase Views & Likes Loader (Persistent) ---
         async function initViewsAndLikesForEpisode(epKey) {
             const viewCountSpan = document.getElementById('view-count');
             const likeCountSpan = document.getElementById('like-count');
@@ -290,7 +290,7 @@
             if(likeCountSpan) likeCountSpan.innerText = "...";
 
             try {
-                let { data, error } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).single();
+                let { data, error } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
 
                 if (data) {
                     viewCountSpan.innerText = formatViewsOrLikes(data.views || 0);
@@ -298,18 +298,16 @@
                 } else {
                     viewCountSpan.innerText = '0';
                     likeCountSpan.innerText = '0';
-                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: 0, likes: 0 });
+                    await supabaseClient.from('drama_stats').insert([{ id: statId, views: 0, likes: 0 }]);
                 }
 
-                // Check User Like Status via Supabase
                 const user = auth.currentUser;
                 if (user && likeBtn) {
-                    let { data: likeData } = await supabaseClient.from('user_likes').select('*').eq('id', `${user.uid}_${statId}`).single();
+                    let { data: likeData } = await supabaseClient.from('user_likes').select('*').eq('id', `${user.uid}_${statId}`).maybeSingle();
                     if (likeData) {
                         likeBtn.classList.add('liked');
                     }
                 }
-
             } catch (e) {
                 console.error("Supabase Init Error:", e);
                 if(viewCountSpan) viewCountSpan.innerText = '0';
@@ -333,25 +331,23 @@
             let isLiked = likeBtn.classList.contains('liked');
 
             try {
-                let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).single();
+                let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
                 let currentLikes = data ? (data.likes || 0) : 0;
                 let currentViews = data ? (data.views || 0) : 0;
 
                 if (isLiked) {
-                    // Unlike (-1)
                     let newLikes = Math.max(0, currentLikes - 1);
                     likeBtn.classList.remove('liked');
                     likeCountSpan.innerText = formatViewsOrLikes(newLikes);
 
-                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: currentViews, likes: newLikes });
+                    await supabaseClient.from('drama_stats').update({ likes: newLikes }).eq('id', statId);
                     await supabaseClient.from('user_likes').delete().eq('id', userLikeId);
                 } else {
-                    // Like (+1)
                     let newLikes = currentLikes + 1;
                     likeBtn.classList.add('liked');
                     likeCountSpan.innerText = formatViewsOrLikes(newLikes);
 
-                    await supabaseClient.from('drama_stats').upsert({ id: statId, views: currentViews, likes: newLikes });
+                    await supabaseClient.from('drama_stats').update({ likes: newLikes }).eq('id', statId);
                     await supabaseClient.from('user_likes').insert([{ id: userLikeId, user_id: user.uid, ep_key: statId }]);
                 }
             } catch (err) {
@@ -752,7 +748,7 @@
 
                     const statId = `${dramaKey}_${currentEpKey}`;
                     try {
-                        let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).single();
+                        let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
                         let currentViews = data ? (data.views || 0) : 0;
                         let currentLikes = data ? (data.likes || 0) : 0;
                         let newViews = currentViews + 1;
@@ -760,7 +756,7 @@
                         const viewCountSpan = document.getElementById('view-count');
                         if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(newViews);
 
-                        await supabaseClient.from('drama_stats').upsert({ id: statId, views: newViews, likes: currentLikes });
+                        await supabaseClient.from('drama_stats').update({ views: newViews }).eq('id', statId);
                     } catch (err) {
                         console.error('View update error:', err);
                     }
