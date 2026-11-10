@@ -354,6 +354,51 @@
             }
         }
 
+        // --- Single Episode Stats Cleanup ---
+        async function deleteEpisodeStats(targetDramaKey, epNumber) {
+            const statId = `${targetDramaKey}_${targetDramaKey}_ep${epNumber}`;
+            try {
+                await supabaseClient.from('drama_stats').delete().eq('id', statId);
+                await supabaseClient.from('user_likes').delete().ilike('ep_key', `%${statId}%`);
+            } catch (err) {
+                console.error("Error deleting episode stats:", err);
+            }
+        }
+
+        // --- Entire Drama & All Episodes Clean Delete (Admin Panel එකට හෝ භාවිතයට) ---
+        async function deleteEntireDrama(targetDramaId) {
+            if (!confirm("ඔබට මෙම සම්පූර්ණ ඩ්‍රාමා එක, එහි සියලුම එපිසෝඩ්ස් සහ ඩේටා මකා දැමීමට අවශ්‍යද?")) return;
+
+            try {
+                // 1. සියලුම Episodes ලබා ගැනීම
+                const episodesSnapshot = await db.collection("dramas").doc(targetDramaId).collection("episodes").get();
+                let batch = db.batch();
+
+                // 2. එක් එක් Episode එකට අදාළ Supabase Stats සහ Firebase Doc මකමින් Batch එකට එකතු කිරීම
+                for (const doc of episodesSnapshot.docs) {
+                    let epData = doc.data();
+                    let epNumber = epData.episodeNumber;
+                    await deleteEpisodeStats(targetDramaId, epNumber);
+                    batch.delete(doc.ref);
+                }
+
+                await batch.commit();
+
+                // 3. ප්‍රධාන Drama එක, Settings සහ Chat collection ඩිලීට් කිරීම
+                await db.collection("dramas").doc(targetDramaId).delete();
+                await db.collection("settings").doc(targetDramaId + "_settings").delete();
+                
+                // (අවශ්‍ය නම් Chat documents සියල්ල මැකීමට මෙහි කෝඩ් එකක් එකතු කළ හැක)
+
+                alert("සම්පූර්ණ ඩ්‍රාමා එක සහ එහි සියලුම එපිසෝඩ්ස් සාර්ථකව මකා දමන ලදී!");
+                window.location.href = "index.html";
+
+            } catch (err) {
+                console.error("Error deleting entire drama:", err);
+                alert("ඩ්‍රාමා එක මකද්දී දෝෂයක් ඇති විය.");
+            }
+        }
+
         function loadDramaDetails() {
             db.collection("dramas").doc(dramaKey).get().then((doc) => {
                 if (doc.exists) {
@@ -513,7 +558,6 @@
             }
         }
 
-        // ලොග් වී නොසිටියත් ඕනෑම කෙනෙක්ට වෙනත් Episode එකක් මාරු කර බලන්න පුළුවන්
         function changeEpisode(videoUrl, epName, epNumber) {
             if (videoUrl === 'COMING_SOON' || !videoUrl) {
                 alert("Episode not uploaded yet, coming soon!");
@@ -583,7 +627,7 @@
         function handleChatSubmit(event) {
             event.preventDefault();
             const user = auth.currentUser;
-            if (!user) { openLoginModal(); return; } // චැට් කරන්න ගියොත් විතරක් ලොග් ඉල්ලයි
+            if (!user) { openLoginModal(); return; }
 
             let inputField = document.getElementById('chatInputText');
             let messageText = inputField.value.trim();
@@ -712,47 +756,72 @@
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
-        // --- YouTube Style View Logic (Works without Sign In) ---
-        let timerStarted = false;
+        // --- YouTube Style Secure View Logic ---
+        let watchTimer = null;
+        let watchSeconds = 0;
         const todayDate = new Date().toISOString().split('T')[0];
         const moviePlayerElement = document.getElementById('moviePlayer');
 
         if (moviePlayerElement) {
-            moviePlayerElement.addEventListener('timeupdate', async () => {
-                const storageKey = `${currentEpKey}_views_${todayDate}`;
-                let currentDayViews = parseInt(localStorage.getItem(storageKey)) || 0;
+            moviePlayerElement.addEventListener('play', () => {
+                const sessionViewKey = `${currentEpKey}_session_viewed`;
+                if (sessionStorage.getItem(sessionViewKey) === 'true') return;
 
-                if (currentDayViews >= maxViewsPerDay || timerStarted) return;
+                if (watchTimer) clearInterval(watchTimer);
 
-                if (moviePlayerElement.currentTime >= 60) {
-                    timerStarted = true;
-                    currentDayViews++;
-                    localStorage.setItem(storageKey, currentDayViews);
-
-                    const statId = `${dramaKey}_${currentEpKey}`;
-                    try {
-                        let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
-                        let currentViews = data ? (data.views || 0) : 0;
-                        let currentLikes = data ? (data.likes || 0) : 0;
-                        let newViews = currentViews + 1;
-
-                        const viewCountSpan = document.getElementById('view-count');
-                        if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(newViews);
-
-                        // ලොග් වී නොසිටියත් Supabase ඩේටාබේස් එකේ Views අප්ඩේට් වේ
-                        await supabaseClient.from('drama_stats').upsert({ 
-                            id: statId, 
-                            views: newViews, 
-                            likes: currentLikes 
-                        });
-                    } catch (err) {
-                        console.error('View update error:', err);
+                watchTimer = setInterval(async () => {
+                    if (moviePlayerElement.paused || moviePlayerElement.ended) {
+                        return;
                     }
+
+                    watchSeconds++;
+
+                    if (watchSeconds >= 60) {
+                        clearInterval(watchTimer);
+                        watchTimer = null;
+
+                        const storageKey = `${currentEpKey}_views_${todayDate}`;
+                        let currentDayViews = parseInt(localStorage.getItem(storageKey)) || 0;
+
+                        if (currentDayViews >= maxViewsPerDay) {
+                            return;
+                        }
+
+                        sessionStorage.setItem(sessionViewKey, 'true');
+                        currentDayViews++;
+                        localStorage.setItem(storageKey, currentDayViews);
+
+                        const statId = `${dramaKey}_${currentEpKey}`;
+                        try {
+                            let { data } = await supabaseClient.from('drama_stats').select('*').eq('id', statId).maybeSingle();
+                            let currentViews = data ? (data.views || 0) : 0;
+                            let currentLikes = data ? (data.likes || 0) : 0;
+                            let newViews = currentViews + 1;
+
+                            const viewCountSpan = document.getElementById('view-count');
+                            if(viewCountSpan) viewCountSpan.innerText = formatViewsOrLikes(newViews);
+
+                            await supabaseClient.from('drama_stats').upsert({ 
+                                id: statId, 
+                                views: newViews, 
+                                likes: currentLikes 
+                            });
+                        } catch (err) {
+                            console.error('View update error:', err);
+                        }
+                    }
+                }, 1000);
+            });
+
+            moviePlayerElement.addEventListener('pause', () => {
+                if (watchTimer) {
+                    clearInterval(watchTimer);
+                    watchTimer = null;
                 }
             });
 
-            moviePlayerElement.addEventListener('play', () => {
-                timerStarted = false;
+            moviePlayerElement.addEventListener('seeking', () => {
+                // Seek කළ විට කාලය පාලනය වේ
             });
         }
 
