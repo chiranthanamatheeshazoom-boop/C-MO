@@ -11,6 +11,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
+    <!-- Supabase JS SDK (For Cleaning Views & Likes) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         * { box-sizing: border-box; }
 
@@ -38,7 +41,6 @@
             text-align: center; 
         }
 
-        /* Login Screen Styles */
         #login-screen {
             text-align: center;
             padding: 40px 20px;
@@ -46,7 +48,7 @@
 
         .google-btn {
             background: #db4437;
-            color: #white;
+            color: #fff;
             padding: 12px 24px;
             border: none;
             border-radius: 6px;
@@ -129,7 +131,7 @@
     <div class="admin-container">
         <h2><i class="fa-solid fa-cloud-arrow-up"></i> CM Movie World Admin Panel</h2>
 
-        <!-- Login Screen (ලොග් වී නැති නම් පෙන්වයි) -->
+        <!-- Login Screen -->
         <div id="login-screen">
             <h3>Admin Authentication Required</h3>
             <p style="color: #aaa; margin-bottom: 20px;">මෙම පැනලය භාවිත කිරීමට කරුණාකර ඔබගේ ඇඩ්මින් ගිණුමෙන් ඇතුල් වන්න.</p>
@@ -138,7 +140,7 @@
             </button>
         </div>
         
-        <!-- Admin Panel Content (ලොග් වූ පසු පමණක් පෙන්වයි) -->
+        <!-- Admin Panel Content -->
         <div id="admin-content" style="display: none;">
             
             <div style="text-align: right; margin-bottom: 20px;">
@@ -159,23 +161,23 @@
                         <input type="text" id="dramaTitle" placeholder="Goblin" required>
                     </div>
                     <div class="form-group">
-                        <label>Poster Image Link (Archive.org or Image URL)</label>
-                        <input type="text" id="dramaPoster" placeholder="https://archive.org/download/.../poster.jpg" required>
+                        <label>Poster Image Link</label>
+                        <input type="text" id="dramaPoster" placeholder="https://..." required>
                     </div>
                     <div class="form-group">
-                        <label>Genres (e.g., Action, Crime, Romance)</label>
+                        <label>Genres (e.g., Fantasy, Romance)</label>
                         <input type="text" id="dramaGenres" placeholder="Fantasy, Romance" required>
                     </div>
                     <div class="form-group">
-                        <label>Total Episodes Count (e.g., 16 Episodes)</label>
+                        <label>Total Episodes Count</label>
                         <input type="text" id="dramaEpisodesCount" placeholder="16 Episodes" required>
                     </div>
                     <div class="form-group">
-                        <label>Release Year (e.g., 2026)</label>
+                        <label>Release Year</label>
                         <input type="text" id="dramaYear" placeholder="2026" required>
                     </div>
                     <div class="form-group">
-                        <label>Rating (e.g., ⭐ 9.3/10)</label>
+                        <label>Rating</label>
                         <input type="text" id="dramaRating" placeholder="⭐ 9.3/10" required>
                     </div>
                     <div class="form-group">
@@ -186,7 +188,7 @@
                 </form>
             </div>
 
-            <!-- 2. ඩ්‍රාමා එකකට එපිසෝඩ් එකක් ඇඩ් කිරීම -->
+            <!-- 2. එපිසෝඩ් එකක් ඇඩ් කිරීම -->
             <div class="section-box">
                 <h3><i class="fa-solid fa-play-circle"></i> 2. Add Episode to Drama</h3>
                 <form onsubmit="addEpisode(event)">
@@ -195,43 +197,43 @@
                         <input type="text" id="epDramaKey" placeholder="goblin" required>
                     </div>
                     <div class="form-group">
-                        <label>Episode Number (e.g., 1, 2, 3...)</label>
+                        <label>Episode Number</label>
                         <input type="number" id="epNumber" placeholder="1" required>
                     </div>
                     <div class="form-group">
-                        <label>Archive.org Direct Video Link (Optional)</label>
-                        <input type="text" id="epVideoUrl" placeholder="https://archive.org/download/.../ep1.mp4">
+                        <label>Video Link</label>
+                        <input type="text" id="epVideoUrl" placeholder="https://...">
                     </div>
                     <button type="submit" style="background: #28a745;">Add Episode</button>
                 </form>
             </div>
 
-            <!-- 3. එපිසෝඩ් ලින්ක් එක වෙනස් කිරීම (Edit / Update Episode) -->
+            <!-- 3. එපිසෝඩ් ලින්ක් එක Update කිරීම -->
             <div class="section-box" style="border-color: #ff9900;">
                 <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 3. Update Existing Episode Link</h3>
                 <form onsubmit="updateEpisode(event)">
                     <div class="form-group">
-                        <label>Drama Key (e.g., goblin)</label>
+                        <label>Drama Key</label>
                         <input type="text" id="upDramaKey" placeholder="goblin" oninput="checkEpisodeStatus()" required>
                     </div>
                     <div class="form-group">
-                        <label>Episode Number to Update (e.g., 1, 2...)</label>
+                        <label>Episode Number to Update</label>
                         <input type="number" id="upEpNumber" placeholder="1" oninput="checkEpisodeStatus()" required>
                     </div>
                     <div class="form-group">
-                        <label>Archive.org Video Link (Leave blank if coming soon)</label>
+                        <label>Video Link</label>
                         <input type="text" id="upVideoUrl" placeholder="Enter link or leave blank">
                     </div>
                     <button type="submit" style="background: #ff9900; color: #000;">Update Episode Link</button>
                 </form>
             </div>
 
-            <!-- 4. ඩ්‍රාමා එකක විස්තර වෙනස් කිරීම (Update Drama Details) -->
+            <!-- 4. ඩ්‍රාමා විස්තර Update කිරීම -->
             <div class="section-box" style="border-color: #ff9900;">
                 <h3 style="color: #ff9900;"><i class="fa-solid fa-pen-to-square"></i> 4. Update Drama Details</h3>
                 <form onsubmit="updateDramaDetails(event)">
                     <div class="form-group">
-                        <label>Drama Key (e.g., goblin)</label>
+                        <label>Drama Key</label>
                         <input type="text" id="editDramaKey" placeholder="goblin" oninput="loadDramaDetailsForEdit()" required>
                     </div>
                     <div class="form-group">
@@ -266,31 +268,31 @@
                 </form>
             </div>
 
-            <!-- 5. තනි එපිසෝඩ් එකක් මැකීම (Delete Single Episode) -->
+            <!-- 5. තනි එපිසෝඩ් එකක් සහ Supabase Views/Likes මැකීම -->
             <div class="section-box" style="border-color: #a00;">
                 <h3 style="color: #ff4444;"><i class="fa-solid fa-trash"></i> 5. Delete Single Episode</h3>
                 <form onsubmit="deleteSingleEpisode(event)">
                     <div class="form-group">
-                        <label>Drama Key (e.g., goblin)</label>
+                        <label>Drama Key</label>
                         <input type="text" id="delEpDramaKey" placeholder="goblin" required>
                     </div>
                     <div class="form-group">
-                        <label>Episode Number to Delete (e.g., 1, 2...)</label>
+                        <label>Episode Number to Delete</label>
                         <input type="number" id="delEpNumber" placeholder="1" required>
                     </div>
-                    <button type="submit" style="background: #dc3545;">Delete Episode</button>
+                    <button type="submit" style="background: #dc3545;">Delete Episode & Stats</button>
                 </form>
             </div>
 
-            <!-- 6. ඩ්‍රාමා එක සම්පූර්ණයෙන්ම සහ චැට් එක සමඟ මැකීම (Delete Entire Drama & Chat) -->
+            <!-- 6. ඩ්‍රාමා එක, Chat සහ Supabase සියල්ල සම්පූර්ණයෙන්ම මැකීම -->
             <div class="section-box" style="border-color: #a00;">
-                <h3 style="color: #ff4444;"><i class="fa-solid fa-trash-can"></i> 6. Delete Entire Drama & Chat</h3>
+                <h3 style="color: #ff4444;"><i class="fa-solid fa-trash-can"></i> 6. Delete Entire Drama, Chat & Stats</h3>
                 <form onsubmit="deleteDrama(event)">
                     <div class="form-group">
                         <label>Select Drama Key to Delete</label>
                         <input type="text" id="delDramaKey" placeholder="goblin" required>
                     </div>
-                    <button type="submit" style="background: #dc3545;">Delete Drama & Chat from Database</button>
+                    <button type="submit" style="background: #dc3545;">Delete Entire Drama & All Data</button>
                 </form>
             </div>
         </div>
@@ -314,9 +316,13 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Supabase Config
+        const SUPABASE_URL = "https://vuftwlmdftvyclcjwgld.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_RR8S7DY_I8oUlcCvVntpqg_sahIYtQP";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const ADMIN_EMAIL = "chiranthanamatheeshazoom@gmail.com";
 
-        // Auth State Monitor
         auth.onAuthStateChanged((user) => {
             if (user && user.email === ADMIN_EMAIL) {
                 document.getElementById('login-screen').style.display = 'none';
@@ -332,21 +338,15 @@
             }
         });
 
-        // Google Login Function
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-            .catch((error) => {
-                alert("ලොග් වීමේ දෝෂයක්: " + error.message);
-            });
+            auth.signInWithPopup(provider).catch((error) => alert("ලොග් වීමේ දෝෂයක්: " + error.message));
         }
 
-        // Logout Function
         function logoutAdmin() {
             auth.signOut();
         }
 
-        // 1. ඩ්‍රාමා එකක් Save කිරීම
         function addNewDrama(event) {
             event.preventDefault();
             let key = document.getElementById('dramaKey').value.trim().toLowerCase();
@@ -367,7 +367,6 @@
             .catch((error) => alert("දෝෂයක් සිදු විය: " + error.message));
         }
 
-        // 2. එපිසෝඩ් එකක් Add කිරීම
         function addEpisode(event) {
             event.preventDefault();
             let dramaKey = document.getElementById('epDramaKey').value.trim().toLowerCase();
@@ -385,7 +384,6 @@
             .catch((error) => alert("දෝෂයක් සිදු විය: " + error.message));
         }
 
-        // 3. එපිසෝඩ් ලින්ක් එක චෙක් කර ඔටෝ පෙන්වීම හෝ 'Not Uploaded' පෙන්වීම
         function checkEpisodeStatus() {
             let dramaKey = document.getElementById('upDramaKey').value.trim().toLowerCase();
             let epNum = document.getElementById('upEpNumber').value.trim();
@@ -406,12 +404,9 @@
                     urlInput.placeholder = "Not Uploaded";
                 }
             })
-            .catch((error) => {
-                console.error("Error checking episode: ", error);
-            });
+            .catch((error) => console.error("Error checking episode: ", error));
         }
 
-        // එපිසෝඩ් ලින්ක් එක Update කිරීම
         function updateEpisode(event) {
             event.preventDefault();
             let dramaKey = document.getElementById('upDramaKey').value.trim().toLowerCase();
@@ -427,20 +422,13 @@
                 episodeNumber: Number(epNum),
                 videoUrl: newUrl
             }, { merge: true })
-            .then(() => {
-                alert("Episode " + epNum + " ලින්ක් එක සාර්ථකව Update කළා! 🔄✨");
-            })
+            .then(() => alert("Episode " + epNum + " ලින්ක් එක සාර්ථකව Update කළා! 🔄✨"))
             .catch((error) => alert("Update කිරීමේදී දෝෂයක්: " + error.message));
         }
 
-        // 4. ඩ්‍රාමා Key එක දුන් විට පරණ විස්තර ටික ඔටෝ Fill වීම
         function loadDramaDetailsForEdit() {
             let key = document.getElementById('editDramaKey').value.trim().toLowerCase();
-            
-            if (!key) {
-                clearDramaEditForm();
-                return;
-            }
+            if (!key) { clearDramaEditForm(); return; }
 
             db.collection("dramas").doc(key).get().then((doc) => {
                 if (doc.exists) {
@@ -452,11 +440,7 @@
                     document.getElementById('editDramaYear').value = data.year || '';
                     document.getElementById('editDramaRating').value = data.rating || '';
                     document.getElementById('editDramaDesc').value = data.description || '';
-                } else {
-                    clearDramaEditForm();
-                }
-            }).catch((error) => {
-                console.error("Error loading drama details: ", error);
+                } else { clearDramaEditForm(); }
             });
         }
 
@@ -470,7 +454,6 @@
             document.getElementById('editDramaDesc').value = '';
         }
 
-        // ඩ්‍රාමා විස්තර Update කිරීම
         function updateDramaDetails(event) {
             event.preventDefault();
             let key = document.getElementById('editDramaKey').value.trim().toLowerCase();
@@ -486,62 +469,75 @@
             };
 
             db.collection("dramas").doc(key).set(updateData, { merge: true })
-            .then(() => {
-                alert("ඩ්‍රාමා එකේ විස්තර සාර්ථකව Update කළා! 🔄✨");
-            })
+            .then(() => alert("ඩ්‍රාමා එකේ විස්තර සාර්ථකව Update කළා! 🔄✨"))
             .catch((error) => alert("දෝෂයක් සිදු විය: " + error.message));
         }
 
-        // 5. තනි එපිසෝඩ් එකක් මැකීම (Delete Single Episode)
-        function deleteSingleEpisode(event) {
+        // 5. තනි එපිසෝඩ් එකක් සහ Supabase Stats මැකීම
+        async function deleteSingleEpisode(event) {
             event.preventDefault();
             let dramaKey = document.getElementById('delEpDramaKey').value.trim().toLowerCase();
             let epNum = document.getElementById('delEpNumber').value.trim();
 
-            if (!confirm(`ඔබට විශ්වාසද "${dramaKey}" ඩ්‍රාමා එකේ Episode ${epNum} සම්පූර්ණයෙන්ම මකා දැමීමට අවශ්‍ය බව?`)) {
-                return;
-            }
-
-            db.collection("dramas").doc(dramaKey).collection("episodes").doc("ep_" + epNum).delete()
-            .then(() => {
-                alert("Episode " + epNum + " සාර්ථකව මකා දමන ලදී! 🗑️");
-                event.target.reset();
-            })
-            .catch((error) => alert("මැකීමේදී දෝෂයක් සිදු විය: " + error.message));
-        }
-
-        // 6. ඩ්‍රාමා එක, එහි එපිසෝඩ්ස් සහ චැට් එක සම්පූර්ණයෙන්ම මැකීම (Delete Entire Drama, Episodes & Chat)
-        async function deleteDrama(event) {
-            event.preventDefault();
-            let dramaKey = document.getElementById('delDramaKey').value.trim().toLowerCase();
-
-            if (!confirm(`ඔබට විශ්වාසද "${dramaKey}" ඩ්‍රාමා එක, එහි සියලුම එපිසෝඩ්ස් සහ චැට් මැසේජ් සියල්ල සම්පූර්ණයෙන්ම මකා දැමීමට අවශ්‍ය බව?`)) {
+            if (!confirm(`ඔබට විශ්වාසද "${dramaKey}" ඩ්‍රාමා එකේ Episode ${epNum} සහ එහි දත්ත සම්පූර්ණයෙන්ම මකා දැමීමට අවශ්‍ය බව?`)) {
                 return;
             }
 
             try {
-                // 1. Episodes Sub-collection එක මකා දැමීම
+                // Firebase එකෙන් Episode එක මකයි
+                await db.collection("dramas").doc(dramaKey).collection("episodes").doc("ep_" + epNum).delete();
+
+                // Supabase එකෙන් Views සහ Likes මකයි
+                const statId = `${dramaKey}_${dramaKey}_ep${epNum}`;
+                await supabaseClient.from('drama_stats').delete().eq('id', statId);
+                await supabaseClient.from('user_likes').delete().ilike('ep_key', `%${statId}%`);
+
+                alert("Episode " + epNum + " සහ එහි සියලුම ඩේටා සාර්ථකව මකා දමන ලදී! 🗑️");
+                event.target.reset();
+            } catch (error) {
+                alert("මැකීමේදී දෝෂයක් සිදු විය: " + error.message);
+            }
+        }
+
+        // 6. ඩ්‍රාමා එක, Chat සහ Supabase සියල්ල සම්පූර්ණයෙන්ම මැකීම
+        async function deleteDrama(event) {
+            event.preventDefault();
+            let dramaKey = document.getElementById('delDramaKey').value.trim().toLowerCase();
+
+            if (!confirm(`ඔබට විශ්වාසද "${dramaKey}" ඩ්‍රාමා එක, එහි සියලුම එපිසෝඩ්ස්, චැට් සහ Supabase ඩේටා සියල්ල සම්පූර්ණයෙන්ම මකා දැමීමට අවශ්‍ය බව?`)) {
+                return;
+            }
+
+            try {
+                // 1. Episodes ලබාගෙන Supabase Stats සමඟ මකා දැමීම
                 const episodesSnapshot = await db.collection("dramas").doc(dramaKey).collection("episodes").get();
                 let batch = db.batch();
                 
-                episodesSnapshot.forEach((doc) => {
+                for (const doc of episodesSnapshot.docs) {
+                    let epData = doc.data();
+                    let epNum = epData.episodeNumber;
+
+                    const statId = `${dramaKey}_${dramaKey}_ep${epNum}`;
+                    await supabaseClient.from('drama_stats').delete().eq('id', statId);
+                    await supabaseClient.from('user_likes').delete().ilike('ep_key', `%${statId}%`);
+
                     batch.delete(doc.ref);
-                });
+                }
                 await batch.commit();
 
-                // 2. අදාළ Chat Collection එකේ ඇති මැසේජ් සියල්ල මකා දැමීම
+                // 2. Chat Collection එක මකා දැමීම
                 const chatSnapshot = await db.collection(dramaKey + "_chat").get();
                 let chatBatch = db.batch();
-                
-                chatSnapshot.forEach((doc) => {
-                    chatBatch.delete(doc.ref);
-                });
+                chatSnapshot.forEach((doc) => { chatBatch.delete(doc.ref); });
                 await chatBatch.commit();
 
-                // 3. ප්‍රධාන Drama Document එක මකා දැමීම
+                // 3. Settings Document එක මකා දැමීම
+                await db.collection("settings").doc(dramaKey + "_settings").delete().catch(() => {});
+
+                // 4. ප්‍රධාන Drama Document එක මකා දැමීම
                 await db.collection("dramas").doc(dramaKey).delete();
 
-                alert("ඩ්‍රාමා එක, එහි එපිසෝඩ්ස් සහ චැට් සියල්ල සාර්ථකව මකා දමන ලදී! 🗑️✨");
+                alert("ඩ්‍රාමා එක, එහි එපිසෝඩ්ස්, චැට් සහ Supabase ඩේටා සියල්ල සාර්ථකව මකා දමන ලදී! 🗑️✨");
                 event.target.reset();
             } catch (error) {
                 alert("මැකීමේදී දෝෂයක් සිදු විය: " + error.message);
